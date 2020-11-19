@@ -18,7 +18,9 @@ def help(message):
 def start(message):
 
     bot.send_message(message.chat.id, 'Привет, это бот для жителей Дома Студента!\n'
-                                      'Здесь вы можете узнать много полезной информции и удобно общаться с соседями! ')
+                                      'Здесь вы можете узнать много полезной информции и удобно общаться с соседями!'
+                                      'Используйте /help чтобы узнать команды')
+
 
     bot.send_sticker(message.chat.id, 'CAACAgIAAxkBAAJc8V-2w6lq33eMxp9tbsA2ZtBHpH8gAAJ0AAM7YCQUs8te1W3kR_QeBA')
 
