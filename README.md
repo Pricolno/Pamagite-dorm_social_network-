@@ -1,1 +1,1 @@
-# pamagite-project
+# PaMagie-project
