@@ -39,23 +39,24 @@ def give_name(message):
                 bot.send_message(message.chat.id, name)
         else:
             bot.send_message(message.chat.id, 'Мы не знаем кто-там живёт 😖')
+
     else:
         bot.send_message(message.chat.id, 'Такой комнаты не существует 🙄')
 
 
 @bot.message_handler(commands=['surname'])
 def get_surname(message):
-    next_message = bot.send_message(message.chat.id, '')
-    bot.register_next_step_handler(next_message, give_name)
+    next_message = bot.send_message(message.chat.id, 'Чьё местопроживание вас интересует?\n Фамилия Имя')
+    bot.register_next_step_handler(next_message, give_room)
 
 
-def surname(message):
-
-    pass
-
-# @bot.message_handler(content_types=['text'])
-# def eho(message):
-#     bot.send_message(message.chat.id, message.text * 2)
+def give_room(message):
+    owner_room = message.text
+    #print(owner_room)
+    if owner_room.lower() in names_room:  # проверка наличие человека в базе данных
+        bot.send_message(message.chat.id, names_room[owner_room.lower()])
+    else:
+        bot.send_message(message.chat.id, 'Этот человек не живёт в общежитии 🙄')
 
 
 if __name__ == '__main__':
