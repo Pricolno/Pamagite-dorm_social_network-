@@ -1,2 +1,2 @@
-# PaMagie-project
+# PaMagiTe-project
 # На питоне
