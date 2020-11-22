@@ -55,9 +55,39 @@ def give_room(message):
     owner_room = message.text
     #print(owner_room)
     if owner_room.lower() in names_room:  # проверка наличие человека в базе данных
-        bot.send_message(message.chat.id, names_room[owner_room.lower()])
+        bot.send_message(message.chat.id, names_room[owner_room.lower()]) # достать номер комнаты жильцов
     else:
         bot.send_message(message.chat.id, 'Этот человек не живёт в общежитии 🙄')
+
+
+@bot.message_handler(commands=['registration'])
+def registration(message):
+    next_message = bot.send_message(message.chat.id, """
+    Введите пожалуйста на новых строчках
+    Фамилия Имя
+    Номер комнаты
+    """)
+    bot.register_next_step_handler(next_message, registration_add_in_bd)
+
+
+def registration_add_in_bd(message):
+    #print(message.text)
+    list_name_room = message.text.split('\n')
+    if not (len(list_name_room) == 2):
+        #print('Пожалуйста, введите корректно данные')
+        next_message = bot.send_message(message.chat.id, 'Пожалуйста, введите корректно данные')
+        bot.register_next_step_handler(next_message, registration_add_in_bd)
+
+    surname_name = list_name_room[0]
+    room = list_name_room[1]
+
+    if room in room_names:
+        room_names[room].append(surname_name)
+    else:
+        room_names[room] = surname_name
+
+    if not(surname_name in names_room):
+        names_room[surname_name] = room
 
 
 if __name__ == '__main__':
