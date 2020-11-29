@@ -61,12 +61,54 @@ def add_students(*, surname: str = None, name: str = None, room: int = None, cha
     return True, []
 
 
+def who_lives_in_room(room: int):
+    db = get_connection()
+    cursor = db.cursor()
+
+    cursor.execute("""
+    SELECT surname, name FROM hostel WHERE room = ?
+    """, (room, ))
+    res = cursor.fetchall()
+    db.commit()
+    # возращает [(Surname, Name], .. ]
+    return res
+
+
+def where_lives_person(surname: str = None, name: str = None):
+
+    db = get_connection()
+    cursor = db.cursor()
+
+    if (surname is None) and (name is None):
+        return
+    elif (surname is None) and not(name is None):
+        cursor.execute("""
+                        SELECT surname, name FROM hostel WHERE name=?
+                        """, (name,))
+    elif not(surname is None) and (name is None):
+        cursor.execute("""
+                SELECT surname, name FROM hostel WHERE surname=?
+                """, (surname,))
+    else:
+        cursor.execute("""
+                SELECT surname, name FROM hostel WHERE surname=? AND name=?
+                """, (surname, name))
+
+    students = cursor.fetchall()
+    db.commit()
+    return students
+
+
+
 if __name__ == '__main__':
     init_bd_hostel()
-    add_students(surname='Naumtsev', name='Aleksandr', room=620, chat_id=None)
-
-
-
+    #add_students(surname='Naumtsev', name='Aleksandr', room=620)
+    #add_students(surname='Pety', name='Skovorodnikov', room=230)
+    #add_students(surname='Pety', name='Skovorodnikov', room=230)
+    #res = who_lives_in_room(620)
+    #print(res)
+    res = where_lives_person(name='Skovorodnikov')
+    print(res)
 
 
 
