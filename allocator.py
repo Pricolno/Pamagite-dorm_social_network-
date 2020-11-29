@@ -81,13 +81,16 @@ def registration_add_in_bd(message):
     surname_name = list_name_room[0]
     room = list_name_room[1]
 
-    if room in room_names:
+    if room in room_names:          # добавление в базу данных
         room_names[room].append(surname_name)
+       # print(room + ' ' + surname_name)
     else:
         room_names[room] = surname_name
+        #print(room + ' ' + surname_name)
 
     if not(surname_name in names_room):
         names_room[surname_name] = room
+        #print(room + ' ' + surname_name)
 
 
 if __name__ == '__main__':
