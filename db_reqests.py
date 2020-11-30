@@ -66,37 +66,44 @@ def who_lives_in_room(room: int):
     cursor = db.cursor()
 
     cursor.execute("""
-    SELECT surname, name FROM hostel WHERE room = ?
+    SELECT surname, name, chat_id FROM hostel WHERE room = ?
     """, (room, ))
     res = cursor.fetchall()
     db.commit()
-    # возращает [(Surname, Name], .. ]
-    return res
+    # возращает [(surname, name, chat_id], .. ]
+    if len(res) > 0:
+        return True, res
+    else:
+        return False, res
 
 
-def where_lives_person(surname: str = None, name: str = None):
+def where_lives_person(surname=None, name=None):
 
     db = get_connection()
     cursor = db.cursor()
 
     if (surname is None) and (name is None):
-        return
+        return False, []
     elif (surname is None) and not(name is None):
         cursor.execute("""
-                        SELECT surname, name FROM hostel WHERE name=?
+                        SELECT room, surname, name, chat_id FROM hostel WHERE name=?
                         """, (name,))
     elif not(surname is None) and (name is None):
         cursor.execute("""
-                SELECT surname, name FROM hostel WHERE surname=?
+                SELECT room, surname, name, chat_id FROM hostel WHERE surname=?
                 """, (surname,))
     else:
         cursor.execute("""
-                SELECT surname, name FROM hostel WHERE surname=? AND name=?
+                SELECT room, surname, name, chat_id FROM hostel WHERE surname=? AND name=?
                 """, (surname, name))
-
+    # возращает [(room, surname, name, chat_id)]
     students = cursor.fetchall()
     db.commit()
-    return students
+
+    if len(students) > 0:
+        return True, students
+    else:
+        return False, []
 
 
 
@@ -107,8 +114,10 @@ if __name__ == '__main__':
     #add_students(surname='Pety', name='Skovorodnikov', room=230)
     #res = who_lives_in_room(620)
     #print(res)
-    res = where_lives_person(name='Skovorodnikov')
-    print(res)
+    #res = where_lives_person(name='Skovorodnikov')
+    #print(res)
+    #print(who_lives_in_room(350))
 
+    #print('  gg gg   '.split())
 
 

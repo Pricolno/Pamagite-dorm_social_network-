@@ -1,7 +1,7 @@
 from config import Token
 import telebot
 from data_base import room_names, names_room
-
+from db_reqests import *
 
 bot = telebot.TeleBot(Token)
 
@@ -16,7 +16,6 @@ def help(message):
 # первое взаимодействие с ботом
 @bot.message_handler(commands=['start'])
 def start(message):
-
     bot.send_message(message.chat.id, 'Привет, это бот для жителей Дома Студента!\n'
                                       'Здесь вы можете узнать много полезной информции и удобно общаться с соседями!'
                                       'Используйте /help чтобы узнать команды')
@@ -32,12 +31,22 @@ def get_room(message):
 
 def give_name(message):
     room = message.text
-    if room in room_names:  # условие есть ли комната в базе данных
-        names = room_names[room]    # взять все фио кто живёт в данной комнате (0 1 2)
+    if not room.isdigit():
+        next_message = bot.send_message(message.chat.id, 'Вы ввели не число, напишите число')
+        bot.register_next_step_handler(next_message, give_name())
+        return
 
-        if len(names) > 0:
-            for name in names:
-                bot.send_message(message.chat.id, name)
+    room = int(room)
+
+    (exists, students) = who_lives_in_room(room)
+
+    if 100 <= room < 800:  # условие есть ли комната в базе данных
+        # names = room_names[room]    # взять все фио кто живёт в данной комнате (0 1 2)
+
+        if exists:
+            bot.send_message(message.chat.id, 'В комнате ' + str(room) + ' живут:')
+            for (surname, name, chat_id) in students:
+                bot.send_message(message.chat.id, surname + ' ' + name)
         else:
             bot.send_message(message.chat.id, 'Мы не знаем кто-там живёт 😖')
 
@@ -53,9 +62,36 @@ def get_surname(message):
 
 def give_room(message):
     owner_room = message.text
-    #print(owner_room)
-    if owner_room.lower() in names_room:  # проверка наличие человека в базе данных
-        bot.send_message(message.chat.id, names_room[owner_room.lower()]) # достать номер комнаты жильцов
+    # print(owner_room)
+    owner_room = owner_room.split(' ')
+    if len(owner_room) > 2:
+        next_message = bot.send_message(message.chat.id,
+                                        'Пожалуйста введите корректно данные\n Фамилия Имя\n Поиск по одной Фамилия/Имя:\n'
+                                        'surname=Фамилия/Имени')
+        bot.register_next_step_handler(next_message, give_room)
+        return
+    surname, name = None, None
+
+    if len(owner_room) == 1:  # кучу косяков проверка на верный ввод
+        flag_nick = owner_room[0]
+        if 'surname=' in flag_nick:
+            surname = flag_nick.replace('surname=', '')
+        elif 'name=' in flag_nick:
+            name = flag_nick.replace('name=', '')
+        else:
+            next_message = bot.send_message(message.chat.id,
+                                            'Пожалуйста введите корректно данные\n Фамилия Имя\n Поиск по одной Фамилии/Имени:\n'
+                                            'surname=Фамилия/Имени')
+            bot.register_next_step_handler(next_message, give_room)
+            return
+    # print()
+    # print(surname)
+    # print(name)
+    exist, info_of_person = where_lives_person(surname=surname, name=name)
+
+    if exist:  # проверка наличие человека в базе данных
+        for room_, surname_, name_, chat_id in info_of_person:
+            bot.send_message(message.chat.id, surname_ + ' ' + name_ + ' : ' + str(room_))  # достать номер комнаты жильцов
     else:
         bot.send_message(message.chat.id, 'Этот человек не живёт в общежитии 🙄')
 
@@ -71,26 +107,26 @@ def registration(message):
 
 
 def registration_add_in_bd(message):
-    #print(message.text)
+    # print(message.text)
     list_name_room = message.text.split('\n')
     if not (len(list_name_room) == 2):
-        #print('Пожалуйста, введите корректно данные')
+        # print('Пожалуйста, введите корректно данные')
         next_message = bot.send_message(message.chat.id, 'Пожалуйста, введите корректно данные')
         bot.register_next_step_handler(next_message, registration_add_in_bd)
 
     surname_name = list_name_room[0]
     room = list_name_room[1]
 
-    if room in room_names:          # добавление в базу данных
+    if room in room_names:  # добавление в базу данных
         room_names[room].append(surname_name)
-       # print(room + ' ' + surname_name)
+    # print(room + ' ' + surname_name)
     else:
         room_names[room] = surname_name
-        #print(room + ' ' + surname_name)
+        # print(room + ' ' + surname_name)
 
-    if not(surname_name in names_room):
+    if not (surname_name in names_room):
         names_room[surname_name] = room
-        #print(room + ' ' + surname_name)
+        # print(room + ' ' + surname_name)
 
 
 if __name__ == '__main__':
