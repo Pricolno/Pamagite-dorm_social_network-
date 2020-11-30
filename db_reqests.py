@@ -32,7 +32,7 @@ def init_bd_hostel(force: bool = False):
     db.commit()
 
 
-def add_students(*, surname: str = None, name: str = None, room: int = None, chat_id: int = None):
+def add_students(surname: str = None, name: str = None, room: int = None, chat_id: int = None):
     not_have = []
     if surname is None:
         not_have.append('surname')

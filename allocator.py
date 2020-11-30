@@ -56,7 +56,8 @@ def give_name(message):
 
 @bot.message_handler(commands=['surname'])
 def get_surname(message):
-    next_message = bot.send_message(message.chat.id, 'Чьё местопроживание вас интересует?\n Фамилия Имя')
+    next_message = bot.send_message(message.chat.id, 'Чьё местопроживание вас интересует?\n Фамилия Имя\n'
+                                                     'Поиск по одной Фамилия/Имя:\nsurname=Фамилия/Имени')
     bot.register_next_step_handler(next_message, give_room)
 
 
@@ -91,7 +92,7 @@ def give_room(message):
 
     if exist:  # проверка наличие человека в базе данных
         for room_, surname_, name_, chat_id in info_of_person:
-            bot.send_message(message.chat.id, surname_ + ' ' + name_ + ' : ' + str(room_))  # достать номер комнаты жильцов
+            bot.send_message(message.chat.id, surname_ + ' ' + name_ + ' : ' + str(room_))   # достать номер комнаты жильцов
     else:
         bot.send_message(message.chat.id, 'Этот человек не живёт в общежитии 🙄')
 
@@ -100,7 +101,8 @@ def give_room(message):
 def registration(message):
     next_message = bot.send_message(message.chat.id, """
     Введите пожалуйста на новых строчках
-    Фамилия Имя
+    Фамилия 
+    Имя
     Номер комнаты
     """)
     bot.register_next_step_handler(next_message, registration_add_in_bd)
@@ -109,24 +111,35 @@ def registration(message):
 def registration_add_in_bd(message):
     # print(message.text)
     list_name_room = message.text.split('\n')
-    if not (len(list_name_room) == 2):
+    if not (len(list_name_room) == 3):
         # print('Пожалуйста, введите корректно данные')
-        next_message = bot.send_message(message.chat.id, 'Пожалуйста, введите корректно данные')
+        next_message = bot.send_message(message.chat.id, """
+    Введите пожалуйста корректные данные
+    Фамилия 
+    Имя
+    Номер комнаты
+    """)
         bot.register_next_step_handler(next_message, registration_add_in_bd)
+        return
 
-    surname_name = list_name_room[0]
-    room = list_name_room[1]
+    surname = list_name_room[0]
+    name = list_name_room[1]  # неправильный ввод может быть
+    room = int(list_name_room[2])
+    chat_id = message.chat.id
+    add_students(surname=surname, name=name, room=room, chat_id=chat_id)
 
-    if room in room_names:  # добавление в базу данных
-        room_names[room].append(surname_name)
-    # print(room + ' ' + surname_name)
-    else:
-        room_names[room] = surname_name
-        # print(room + ' ' + surname_name)
+    bot.send_message(message.chat.id, 'Пользователь успешно добавлен в систему')
 
-    if not (surname_name in names_room):
-        names_room[surname_name] = room
-        # print(room + ' ' + surname_name)
+    # if room in room_names:  # добавление в базу данных
+    #     room_names[room].append(surname_name)
+    # # print(room + ' ' + surname_name)
+    # else:
+    #     room_names[room] = surname_name
+    #     # print(room + ' ' + surname_name)
+    #
+    # if not (surname_name in names_room):
+    #     names_room[surname_name] = room
+    #     # print(room + ' ' + surname_name)
 
 
 if __name__ == '__main__':
