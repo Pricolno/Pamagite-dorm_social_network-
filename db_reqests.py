@@ -8,7 +8,7 @@ __connection = None
 def get_connection():
     global __connection
     if __connection is None:
-        __connection = sqlite3.connect(path_to_db)
+        __connection = sqlite3.connect(path_to_db, check_same_thread=False)
 
     return __connection
 
@@ -70,6 +70,8 @@ def who_lives_in_room(room: int):
     """, (room, ))
     res = cursor.fetchall()
     db.commit()
+    cursor.close()
+
     # возращает [(surname, name, chat_id], .. ]
     if len(res) > 0:
         return True, res
@@ -83,6 +85,7 @@ def where_lives_person(surname=None, name=None):
     cursor = db.cursor()
 
     if (surname is None) and (name is None):
+        cursor.close()
         return False, []
     elif (surname is None) and not(name is None):
         cursor.execute("""
@@ -98,13 +101,12 @@ def where_lives_person(surname=None, name=None):
                 """, (surname, name))
     # возращает [(room, surname, name, chat_id)]
     students = cursor.fetchall()
-    db.commit()
+    cursor.close()
 
     if len(students) > 0:
         return True, students
     else:
         return False, []
-
 
 
 if __name__ == '__main__':

@@ -33,12 +33,12 @@ def give_name(message):
     room = message.text
     if not room.isdigit():
         next_message = bot.send_message(message.chat.id, 'Вы ввели не число, напишите число')
-        bot.register_next_step_handler(next_message, give_name())
+        bot.register_next_step_handler(next_message, give_name)
         return
 
     room = int(room)
 
-    (exists, students) = who_lives_in_room(room)
+    exists, students = who_lives_in_room(room)
 
     if 100 <= room < 800:  # условие есть ли комната в базе данных
         # names = room_names[room]    # взять все фио кто живёт в данной комнате (0 1 2)
@@ -73,21 +73,23 @@ def give_room(message):
         return
     surname, name = None, None
 
+
     if len(owner_room) == 1:  # кучу косяков проверка на верный ввод
         flag_nick = owner_room[0]
         if 'surname=' in flag_nick:
-            surname = flag_nick.replace('surname=', '')
+            surname = flag_nick.replace('surname=', '').strip()
         elif 'name=' in flag_nick:
-            name = flag_nick.replace('name=', '')
+            name = flag_nick.replace('name=', '').strip()
         else:
             next_message = bot.send_message(message.chat.id,
                                             'Пожалуйста введите корректно данные\n Фамилия Имя\n Поиск по одной Фамилии/Имени:\n'
                                             'surname=Фамилия/Имени')
             bot.register_next_step_handler(next_message, give_room)
             return
-    # print()
-    # print(surname)
-    # print(name)
+    else:
+        surname = owner_room[0]
+        name = owner_room[1]
+
     exist, info_of_person = where_lives_person(surname=surname, name=name)
 
     if exist:  # проверка наличие человека в базе данных
@@ -129,17 +131,6 @@ def registration_add_in_bd(message):
     add_students(surname=surname, name=name, room=room, chat_id=chat_id)
 
     bot.send_message(message.chat.id, 'Пользователь успешно добавлен в систему')
-
-    # if room in room_names:  # добавление в базу данных
-    #     room_names[room].append(surname_name)
-    # # print(room + ' ' + surname_name)
-    # else:
-    #     room_names[room] = surname_name
-    #     # print(room + ' ' + surname_name)
-    #
-    # if not (surname_name in names_room):
-    #     names_room[surname_name] = room
-    #     # print(room + ' ' + surname_name)
 
 
 if __name__ == '__main__':
