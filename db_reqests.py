@@ -109,6 +109,24 @@ def where_lives_person(surname=None, name=None):
         return False, []
 
 
+def get_profile(chat_id):
+    db = get_connection()
+    cursor = db.cursor()
+    cursor.execute("""
+    SELECT room, surname, name, chat_id FROM hostel WHERE chat_id=?
+    """, (chat_id, ))
+
+    profile = cursor.fetchall()
+    db.commit()
+    cursor.close()
+
+    print(profile)
+    if len(profile) == 0:
+        return False, []
+    else:
+        return True, profile
+
+
 if __name__ == '__main__':
     init_bd_hostel()
     #add_students(surname='Naumtsev', name='Aleksandr', room=620)
@@ -121,5 +139,5 @@ if __name__ == '__main__':
     #print(who_lives_in_room(350))
 
     #print('  gg gg   '.split())
-
+    print(get_profile('387731337'))
 
