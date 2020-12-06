@@ -139,5 +139,5 @@ if __name__ == '__main__':
     #print(who_lives_in_room(350))
 
     #print('  gg gg   '.split())
-    print(get_profile('387731337'))
+    #print(get_profile('387731337'))
 
