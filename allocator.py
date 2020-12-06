@@ -194,6 +194,9 @@ def change_data_in_profile_bot(message):
     global data_type
     print(data_type)
     print(message.text)
+    if data_type == 'exit':
+        return
+
     change_data_in_profile(message.chat.id, data_type, message.text)
 
     markup = telebot.types.ReplyKeyboardMarkup(True, True)
@@ -206,14 +209,37 @@ def change_data_in_profile_bot(message):
     next_message = bot.send_message(message.chat.id, "Что вы хотите изменить?", reply_markup=markup)
     bot.register_next_step_handler(next_message, change_profile)
 
+@bot.message_handler(commands=['send_mes_to_room'])
+def send_message_across_the_room_request(message):
+    next_message = bot.send_message(message.chat.id, 'Какой комнате вы хотите отправить сообщение?')
+    bot.register_next_step_handler(next_message, send_message_across_the_room)
 
 
+request_room = -1
+
+def send_message_across_the_room(message):
+    global request_room
+    print(message.text)
+    if message.text.isdigit():
+        request_room = int(message.text)
+        next_message = bot.send_message(message.chat.id, f'Напишите послание комнате: {request_room}')
+        bot.register_next_step_handler(next_message, send_message_across_the_room_final)
+    else:
+        bot.send_message(message.chat.id, 'Введено не число')
 
 
-
-def passive_state(message):
-    pass
-
+def send_message_across_the_room_final(message):
+    global request_room
+    letter = message.text
+    exist, persons = who_lives_in_room(request_room)
+    if exist:
+        persons_chat_id = []
+        bot.send_message(message.chat.id, 'Отправили сообщение:')
+        for person in persons:
+            bot.send_message(person[2], letter)
+            bot.send_message(message.chat.id, person[0] + ' ' + person[1])
+    else:
+        bot.send_message(message.chat.id, 'Мы не знаем кто там живёт :(')
 
 
 if __name__ == '__main__':
