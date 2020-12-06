@@ -153,8 +153,8 @@ def registration_add_in_bd(message):
 def show_profile(message):
     chat_id = message.chat.id
     exist, profile = get_profile(chat_id)
-    profile = profile[0]
     if exist:
+        profile = profile[0]
         room = profile[0]
         surname = profile[1]
         name = profile[2]

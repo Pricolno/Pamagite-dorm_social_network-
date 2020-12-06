@@ -133,8 +133,8 @@ def change_data_in_profile(chat_id, data_type, replacement):
 
     sql = f"""
     UPDATE hostel 
-    SET {data_type} = {replacement}
-    WHERE hostel.chat_id = {chat_id}  
+    SET {data_type} = '{replacement}'
+    WHERE hostel.chat_id = '{chat_id} ' 
     """
 
     cursor.execute(sql)
