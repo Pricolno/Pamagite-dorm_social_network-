@@ -127,8 +127,23 @@ def get_profile(chat_id):
         return True, profile
 
 
+def change_data_in_profile(chat_id, data_type, replacement):
+    db = get_connection()
+    cursor = db.cursor()
+
+    sql = f"""
+    UPDATE hostel 
+    SET {data_type} = {replacement}
+    WHERE hostel.chat_id = {chat_id}  
+    """
+
+    cursor.execute(sql)
+    db.commit()
+    cursor.close()
+    return True
+
 if __name__ == '__main__':
-    init_bd_hostel()
+    init_bd_hostel(force=True)
     #add_students(surname='Naumtsev', name='Aleksandr', room=620)
     #add_students(surname='Pety', name='Skovorodnikov', room=230)
     #add_students(surname='Pety', name='Skovorodnikov', room=230)

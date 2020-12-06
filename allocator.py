@@ -161,39 +161,46 @@ def show_profile(message):
         chat_id = profile[3]
 
         markup = telebot.types.ReplyKeyboardMarkup(True, True)
-        button_surname = telebot.types.KeyboardButton('Фамилия')
-        button_name = telebot.types.KeyboardButton('Имя')
-        button_room = telebot.types.KeyboardButton('Комната')
-        button_exit = telebot.types.KeyboardButton('Выйти')
+        button_surname = telebot.types.KeyboardButton('surname')
+        button_name = telebot.types.KeyboardButton('name')
+        button_room = telebot.types.KeyboardButton('room')
+        button_exit = telebot.types.KeyboardButton('exit')
         markup.row(button_surname, button_name, button_room, button_exit)
 
-        next_message = bot.send_message(message.chat.id, f""" Surname: {surname}\nName: {name}\nRoom: {room}""", reply_markup=markup)
+        next_message = bot.send_message(message.chat.id, f""" Surname: {surname}\nName: {name}\nRoom: {room}\n\nВы можете изменить данные""", reply_markup=markup)
         bot.register_next_step_handler(next_message, change_profile)
 
     else:
         next_message = bot.send_message(message.chat.id, """Вы не зарегистрированны""")
         bot.register_next_step_handler(next_message, registration)
-    return
 
 
 
+
+
+data_type = ''
 
 def change_profile(message):
 
-    if message.text == 'Фамилия':
-        bot.send_message(message.chat.id, '1')
-    elif message.text == 'Имя':
-        bot.send_message(message.chat.id, '2')
-    elif message.text == 'Комната':
-        bot.send_message(message.chat.id, '3')
-    else:
-        return
+    if message.text in ['surname', 'name', 'room']:
+        next_message = bot.send_message(message.chat.id, 'Введите желаемые изменения')
+        global data_type
+        data_type = message.text
+        bot.register_next_step_handler(next_message, change_data_in_profile_bot)
+
+
+
+def change_data_in_profile_bot(message):
+    global data_type
+    print(data_type)
+    print(message.text)
+    change_data_in_profile(message.chat.id, data_type, message.text)
 
     markup = telebot.types.ReplyKeyboardMarkup(True, True)
-    button_surname = telebot.types.KeyboardButton('Фамилия')
-    button_name = telebot.types.KeyboardButton('Имя')
-    button_room = telebot.types.KeyboardButton('Комната')
-    button_exit = telebot.types.KeyboardButton('Выйти')
+    button_surname = telebot.types.KeyboardButton('surname')
+    button_name = telebot.types.KeyboardButton('name')
+    button_room = telebot.types.KeyboardButton('room')
+    button_exit = telebot.types.KeyboardButton('exit')
     markup.row(button_surname, button_name, button_room, button_exit)
 
     next_message = bot.send_message(message.chat.id, "Что вы хотите изменить?", reply_markup=markup)
@@ -202,7 +209,14 @@ def change_profile(message):
 
 
 
-if __name__ == '__main__':s
+
+
+def passive_state(message):
+    pass
+
+
+
+if __name__ == '__main__':
     bot.polling(none_stop=True)
 
 
