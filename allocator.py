@@ -209,7 +209,7 @@ def change_data_in_profile_bot(message):
     next_message = bot.send_message(message.chat.id, "Что вы хотите изменить?", reply_markup=markup)
     bot.register_next_step_handler(next_message, change_profile)
 
-@bot.message_handler(commands=['send_mes_to_room'])
+@bot.message_handler(commands=['send_message_to_room'])
 def send_message_across_the_room_request(message):
     next_message = bot.send_message(message.chat.id, 'Какой комнате вы хотите отправить сообщение?')
     bot.register_next_step_handler(next_message, send_message_across_the_room)
