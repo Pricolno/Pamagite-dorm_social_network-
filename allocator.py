@@ -1,18 +1,35 @@
 from config import Token
 import telebot
 from db_reqests import *
-from aiogram.types import ReplyKeyboardRemove, \
-    ReplyKeyboardMarkup, KeyboardButton, \
-    InlineKeyboardMarkup, InlineKeyboardButton
+import os
+import sys
+import vk_api
+import configparser
+# from aiogram.types import ReplyKeyboardRemove, \
+#     ReplyKeyboardMarkup, KeyboardButton, \
+#     InlineKeyboardMarkup, InlineKeyboardButton
 
 bot = telebot.TeleBot(Token)
+
+config_path = os.path.join(sys.path[0], 'settings.ini')
+config = configparser.ConfigParser()
+config.read(config_path)
+ACCESS_TOKEN_VK = config.get('VK', 'ACCESS_TOKEN_VK')
+DOMAIN = config.get('VK', 'DOMAIN')
+COUNT = config.get('VK', 'COUNT')
+INCLUDE_LINK = config.getboolean('Settings', 'INCLUDE_LINK')
+PREVIEW_LINK = config.getboolean('Settings', 'PREVIEW_LINK')
+
+message_breakers = [':', ' ', '\n']
+max_message_length = 4091
 
 
 @bot.message_handler(commands=['help'])
 def help(message):
     bot.send_message(message.chat.id, "/room  По комнате узнать кто там живёт\n"
                                       "/surname По фамилии узнать где он живёт\n"
-                                      "/help Узнать описание команд")
+                                      "/help Узнать описание команд\n"
+                                      "/info Узнать свежую полезную информацию")
 
 
 # первое взаимодействие с ботом
@@ -74,7 +91,6 @@ def give_room(message):
         bot.register_next_step_handler(next_message, give_room)
         return
     surname, name = None, None
-
 
     if len(owner_room) == 1:  # кучу косяков проверка на верный ввод
         flag_nick = owner_room[0]
@@ -175,10 +191,8 @@ def show_profile(message):
         bot.register_next_step_handler(next_message, registration)
 
 
-
-
-
 data_type = ''
+
 
 def change_profile(message):
 
@@ -187,7 +201,6 @@ def change_profile(message):
         global data_type
         data_type = message.text
         bot.register_next_step_handler(next_message, change_data_in_profile_bot)
-
 
 
 def change_data_in_profile_bot(message):
@@ -209,6 +222,7 @@ def change_data_in_profile_bot(message):
     next_message = bot.send_message(message.chat.id, "Что вы хотите изменить?", reply_markup=markup)
     bot.register_next_step_handler(next_message, change_profile)
 
+
 @bot.message_handler(commands=['send_message_to_room'])
 def send_message_across_the_room_request(message):
     next_message = bot.send_message(message.chat.id, 'Какой комнате вы хотите отправить сообщение?')
@@ -216,6 +230,7 @@ def send_message_across_the_room_request(message):
 
 
 request_room = -1
+
 
 def send_message_across_the_room(message):
     global request_room
@@ -242,7 +257,56 @@ def send_message_across_the_room_final(message):
         bot.send_message(message.chat.id, 'Мы не знаем кто там живёт :(')
 
 
+def get_data(domain_vk, count_vk):
+    vk_session = vk_api.VkApi(token=ACCESS_TOKEN_VK)
+    vk = vk_session.get_api()
+    response = vk.wall.get(domain=domain_vk, count=count_vk)
+    return response
+
+
+def check_posts_vk(message_chat_id):
+    posts = get_data(DOMAIN, COUNT)
+    posts = reversed(posts['items'])
+    for post in posts:
+        text = post['text']
+        send_posts_text(text, message_chat_id)
+        with open(config_path, "w") as config_file:
+            config.write(config_file)
+
+
+def send_posts_text(text, message_chat_id):
+    if text == '':
+        print('no text')
+    else:
+        # Если слишком много символов, разделяем сообщение
+        for msg in split(text):
+            bot.send_message(message_chat_id, msg, disable_web_page_preview=not PREVIEW_LINK)
+
+
+def split(text):
+    if len(text) >= max_message_length:
+        last_index = max(
+            map(lambda separator: text.rfind(separator, 0, max_message_length), message_breakers))
+        good_part = text[:last_index]
+        bad_part = text[last_index + 1:]
+        return [good_part] + split(bad_part)
+    else:
+        return [text]
+
+
+@bot.message_handler(commands=['info'])
+def get_info(message):
+    markup = telebot.types.InlineKeyboardMarkup()
+    markup.add(telebot.types.InlineKeyboardButton(text='Лупа и Пупа', callback_data='lypa_group'))
+    bot.send_message(message.chat.id, text='Выберите источник информации', reply_markup=markup)
+
+
+# Inline keyboard
+@bot.callback_query_handler(func=lambda call: True)
+def callback_inline(call):
+    if call.data == 'lypa_group':
+        check_posts_vk(call.message.chat.id)
+
+
 if __name__ == '__main__':
     bot.polling(none_stop=True)
-
-
