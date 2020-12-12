@@ -265,12 +265,16 @@ def get_data(domain_vk, count_vk):
     return response
 
 
-def check_posts_vk(message_chat_id):
+def check_posts_vk(message_chat_ids):
     posts = get_data(DOMAIN, COUNT)
     posts = reversed(posts['items'])
     for post in posts:
+        id = config.get('Settings', 'LAST_ID')
+        if int(post['id']) <= int(id):
+            continue
         text = post['text']
-        send_posts_text(text, message_chat_id)
+        for chat_id in message_chat_ids:
+            send_posts_text(text, chat_id)
         with open(config_path, "w") as config_file:
             config.write(config_file)
 
