@@ -29,6 +29,7 @@ def init_bd_hostel(force: bool = False):
 
     cursor.execute(query)
     db.commit()
+    cursor.close()
 
 
 def add_students(surname: str = None, name: str = None, room: int = None, chat_id: int = None):
@@ -57,6 +58,8 @@ def add_students(surname: str = None, name: str = None, room: int = None, chat_i
                             VALUES(?, ?, ?, ?)""", (surname, name, room, None))
 
     db.commit()
+    cursor.close()
+
     return True, []
 
 
@@ -141,8 +144,23 @@ def change_data_in_profile(chat_id, data_type, replacement):
     return True
 
 
+def get_all_chat_ids():
+    db = get_connection()
+    cursor = db.cursor()
+
+    cursor.execute("""
+        SELECT chat_id FROM hostel
+        """)
+
+    list_chat_ids = [chat_id_empty[0] for chat_id_empty in cursor.fetchall()]
+    db.commit()
+    cursor.close()
+
+    return list_chat_ids
+
+
 if __name__ == '__main__':
-    init_bd_hostel(force=True)
+    init_bd_hostel()
     # add_students(surname='Naumtsev', name='Aleksandr', room=620)
     # add_students(surname='Pety', name='Skovorodnikov', room=230)
     # add_students(surname='Pety', name='Skovorodnikov', room=230)
@@ -154,3 +172,6 @@ if __name__ == '__main__':
 
     # print('  gg gg   '.split())
     # print(get_profile('387731337'))
+    #print(help(sqlite3.connect(path_to_db)))
+
+    #print(get_chat_ids())
