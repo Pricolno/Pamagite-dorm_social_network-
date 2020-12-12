@@ -69,7 +69,8 @@ def give_room(message):
     owner_room = owner_room.split(' ')
     if len(owner_room) > 2:
         next_message = bot.send_message(message.chat.id,
-                                        'Пожалуйста введите корректно данные\n Фамилия Имя\n Поиск по одной Фамилия/Имя:\n'
+                                        'Пожалуйста введите корректно данные\n Фамилия Имя\n Поиск по одной '
+                                        'Фамилия/Имя:\n '
                                         'surname=Фамилия/Имени')
         bot.register_next_step_handler(next_message, give_room)
         return

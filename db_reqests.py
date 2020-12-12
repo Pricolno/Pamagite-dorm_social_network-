@@ -14,7 +14,6 @@ def get_connection():
 
 
 def init_bd_hostel(force: bool = False):
-
     db = get_connection()
     cursor = db.cursor()
 
@@ -44,13 +43,13 @@ def add_students(surname: str = None, name: str = None, room: int = None, chat_i
         not_have.append('chat_id')
 
     for not_given in not_have:
-        if not(not_given == 'chat_id'):
+        if not (not_given == 'chat_id'):
             return False, not_have
 
     db = get_connection()
     cursor = db.cursor()
 
-    if not(chat_id is None):
+    if not (chat_id is None):
         db.execute(""" INSERT INTO hostel(surname, name, room, chat_id) 
                     VALUES(?, ?, ?, ?)""", (surname, name, room, chat_id))
     else:
@@ -67,7 +66,7 @@ def who_lives_in_room(room: int):
 
     cursor.execute("""
     SELECT surname, name, chat_id FROM hostel WHERE room = ?
-    """, (room, ))
+    """, (room,))
     res = cursor.fetchall()
     db.commit()
     cursor.close()
@@ -80,18 +79,17 @@ def who_lives_in_room(room: int):
 
 
 def where_lives_person(surname=None, name=None):
-
     db = get_connection()
     cursor = db.cursor()
 
     if (surname is None) and (name is None):
         cursor.close()
         return False, []
-    elif (surname is None) and not(name is None):
+    elif (surname is None) and not (name is None):
         cursor.execute("""
                         SELECT room, surname, name, chat_id FROM hostel WHERE name=?
                         """, (name,))
-    elif not(surname is None) and (name is None):
+    elif not (surname is None) and (name is None):
         cursor.execute("""
                 SELECT room, surname, name, chat_id FROM hostel WHERE surname=?
                 """, (surname,))
@@ -114,7 +112,7 @@ def get_profile(chat_id):
     cursor = db.cursor()
     cursor.execute("""
     SELECT room, surname, name, chat_id FROM hostel WHERE chat_id=?
-    """, (chat_id, ))
+    """, (chat_id,))
 
     profile = cursor.fetchall()
     db.commit()
@@ -142,17 +140,17 @@ def change_data_in_profile(chat_id, data_type, replacement):
     cursor.close()
     return True
 
+
 if __name__ == '__main__':
     init_bd_hostel(force=True)
-    #add_students(surname='Naumtsev', name='Aleksandr', room=620)
-    #add_students(surname='Pety', name='Skovorodnikov', room=230)
-    #add_students(surname='Pety', name='Skovorodnikov', room=230)
-    #res = who_lives_in_room(620)
-    #print(res)
-    #res = where_lives_person(name='Skovorodnikov')
-    #print(res)
-    #print(who_lives_in_room(350))
+    # add_students(surname='Naumtsev', name='Aleksandr', room=620)
+    # add_students(surname='Pety', name='Skovorodnikov', room=230)
+    # add_students(surname='Pety', name='Skovorodnikov', room=230)
+    # res = who_lives_in_room(620)
+    # print(res)
+    # res = where_lives_person(name='Skovorodnikov')
+    # print(res)
+    # print(who_lives_in_room(350))
 
-    #print('  gg gg   '.split())
-    #print(get_profile('387731337'))
-
+    # print('  gg gg   '.split())
+    # print(get_profile('387731337'))
