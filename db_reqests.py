@@ -1,5 +1,5 @@
 import sqlite3
-
+import time
 path_to_db = 'data_base/hostel.db'
 
 __connection = None
@@ -172,3 +172,7 @@ if __name__ == '__main__':
     #print('  gg gg   '.split())
     #print(get_profile('387731337'))
 
+    print(time.time())
+    for i in range(1000000):
+        i+=1
+    print(time.time())

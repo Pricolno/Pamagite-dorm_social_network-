@@ -1,3 +1,5 @@
+from threading import Thread
+
 from config import Token
 import telebot
 from db_reqests import *
@@ -5,10 +7,12 @@ import os
 import sys
 import vk_api
 import configparser
-from time import sleep
+from time import sleep, clock
+
 # from aiogram.types import ReplyKeyboardRemove, \
 #     ReplyKeyboardMarkup, KeyboardButton, \
 #     InlineKeyboardMarkup, InlineKeyboardButton
+
 
 bot = telebot.TeleBot(Token)
 
@@ -113,7 +117,8 @@ def give_room(message):
 
     if exist:  # проверка наличие человека в базе данных
         for room_, surname_, name_, chat_id in info_of_person:
-            bot.send_message(message.chat.id, surname_ + ' ' + name_ + ' : ' + str(room_))   # достать номер комнаты жильцов
+            bot.send_message(message.chat.id,
+                             surname_ + ' ' + name_ + ' : ' + str(room_))  # достать номер комнаты жильцов
     else:
         bot.send_message(message.chat.id, 'Этот человек не живёт в общежитии 🙄')
 
@@ -155,7 +160,7 @@ def registration_add_in_bd(message):
 
     surname = list_name_room[0]
     name = list_name_room[1]  # неправильный ввод может быть
-    if not(list_name_room[2].isdigit()):
+    if not (list_name_room[2].isdigit()):
         exception_registration_add_in_bd(message)
         return
 
@@ -184,7 +189,9 @@ def show_profile(message):
         button_exit = telebot.types.KeyboardButton('exit')
         markup.row(button_surname, button_name, button_room, button_exit)
 
-        next_message = bot.send_message(message.chat.id, f""" Surname: {surname}\nName: {name}\nRoom: {room}\n\nВы можете изменить данные""", reply_markup=markup)
+        next_message = bot.send_message(message.chat.id,
+                                        f""" Surname: {surname}\nName: {name}\nRoom: {room}\n\nВы можете изменить данные""",
+                                        reply_markup=markup)
         bot.register_next_step_handler(next_message, change_profile)
 
     else:
@@ -196,7 +203,6 @@ data_type = ''
 
 
 def change_profile(message):
-
     if message.text in ['surname', 'name', 'room']:
         next_message = bot.send_message(message.chat.id, 'Введите желаемые изменения')
         global data_type
@@ -265,16 +271,22 @@ def get_data(domain_vk, count_vk):
     return response
 
 
-def check_posts_vk(message_chat_ids):
+def check_posts_vk():
     posts = get_data(DOMAIN, COUNT)
     posts = reversed(posts['items'])
+    flag = False
     for post in posts:
         id = config.get('Settings', 'LAST_ID')
         if int(post['id']) <= int(id):
             continue
         text = post['text']
+        if not flag:
+            # message_chat_ids = get_all_chat_ids()
+            message_chat_ids = [387731337]
+            flag = True
         for chat_id in message_chat_ids:
             send_posts_text(text, chat_id)
+        config.set('Settings', 'LAST_ID', str(post['id']))
         with open(config_path, "w") as config_file:
             config.write(config_file)
 
@@ -285,7 +297,17 @@ def send_posts_text(text, message_chat_id):
     else:
         # Если слишком много символов, разделяем сообщение
         for msg in split(text):
-            bot.send_message(message_chat_id, msg, disable_web_page_preview=not PREVIEW_LINK)
+            next_message = bot.send_message(message_chat_id, msg, disable_web_page_preview=not PREVIEW_LINK)
+            bot.register_next_step_handler(next_message, check_left_person)
+            print('отправил')
+
+
+def check_left_person(message):
+    print(message)
+    if message['eror_code'] == 403:
+        print('Отлетел беняга')
+    else:
+        print('Остался с нами')
 
 
 def split(text):
@@ -313,5 +335,29 @@ def callback_inline(call):
         check_posts_vk(call.message.chat.id)
 
 
+def bot_telegram_polling(bot):
+    while 1:
+        try:
+            bot.polling(none_stop=True)
+        except Exception as exception:
+            print(exception)
+
+
+def vk_post(bot):
+    # print('hello')
+    # while (time.time() - Last_time) > 10:
+    #     print('hello')
+    #     check_posts_vk()
+    #     Last_time = time.time()
+    # print('goodby')
+    while True:
+        check_posts_vk()
+        sleep(10)
+
+
 if __name__ == '__main__':
-    bot.polling(none_stop=True)
+    Last_time = time.time()
+    print(Last_time)
+    print(time.time() - Last_time)
+    Thread(target=bot_telegram_polling, args=(bot,)).start()
+    Thread(target=vk_post, args=(bot,)).start()
