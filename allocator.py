@@ -7,7 +7,7 @@ import os
 import sys
 import vk_api
 import configparser
-from time import sleep, clock
+from time import sleep
 
 # from aiogram.types import ReplyKeyboardRemove, \
 #     ReplyKeyboardMarkup, KeyboardButton, \
