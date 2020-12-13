@@ -20,8 +20,10 @@ config_path = os.path.join(sys.path[0], 'settings.ini')
 config = configparser.ConfigParser()
 config.read(config_path)
 ACCESS_TOKEN_VK = config.get('VK', 'ACCESS_TOKEN_VK')
-DOMAIN = config.get('VK', 'DOMAIN')
-COUNT = config.get('VK', 'COUNT')
+DOMAIN_TEST = config.get('VK', 'DOMAIN_TEST')
+DOMAIN_MAIN = config.get('VK', 'DOMAIN_MAIN')
+COUNT_TEST = config.get('VK', 'COUNT_TEST')
+COUNT_MAIN = config.get('VK', 'COUNT_MAIN')
 INCLUDE_LINK = config.getboolean('Settings', 'INCLUDE_LINK')
 PREVIEW_LINK = config.getboolean('Settings', 'PREVIEW_LINK')
 
@@ -271,24 +273,31 @@ def get_data(domain_vk, count_vk):
     return response
 
 
-def check_posts_vk():
-    posts = get_data(DOMAIN, COUNT)
-    posts = reversed(posts['items'])
-    flag = False
-    for post in posts:
-        id = config.get('Settings', 'LAST_ID')
-        if int(post['id']) <= int(id):
-            continue
-        text = post['text']
-        if not flag:
-            # message_chat_ids = get_all_chat_ids()
-            message_chat_ids = [387731337]
-            flag = True
-        for chat_id in message_chat_ids:
-            send_posts_text(text, chat_id)
-        config.set('Settings', 'LAST_ID', str(post['id']))
-        with open(config_path, "w") as config_file:
-            config.write(config_file)
+def check_posts_vk(message_chat_id=None):
+    if message_chat_id:
+        posts = get_data(DOMAIN_MAIN, COUNT_MAIN)
+        posts = reversed(posts['items'])
+        for post in posts:
+            text = post['text']
+            send_posts_text(text, message_chat_id)
+    else:
+        posts = get_data(DOMAIN_TEST, COUNT_TEST)
+        posts = reversed(posts['items'])
+        flag = False
+        for post in posts:
+            id = config.get('Settings', 'LAST_ID')
+            if int(post['id']) <= int(id):
+                continue
+            text = post['text']
+            if not flag:
+                # message_chat_ids = get_all_chat_ids()
+                message_chat_ids = [387731337]
+                flag = True
+            for chat_id in message_chat_ids:
+                send_posts_text(text, chat_id)
+            config.set('Settings', 'LAST_ID', str(post['id']))
+            with open(config_path, "w") as config_file:
+                config.write(config_file)
 
 
 def send_posts_text(text, message_chat_id):
@@ -304,7 +313,7 @@ def send_posts_text(text, message_chat_id):
 
 def check_left_person(message):
     print(message)
-    if message['eror_code'] == 403:
+    if message['error_code'] == 403:
         print('Отлетел беняга')
     else:
         print('Остался с нами')
@@ -356,8 +365,5 @@ def vk_post(bot):
 
 
 if __name__ == '__main__':
-    Last_time = time.time()
-    print(Last_time)
-    print(time.time() - Last_time)
     Thread(target=bot_telegram_polling, args=(bot,)).start()
     Thread(target=vk_post, args=(bot,)).start()
