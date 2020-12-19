@@ -291,8 +291,9 @@ def check_posts_vk(message_chat_id=None):
             text = post['text']
             if not flag:
                 # message_chat_ids = get_all_chat_ids()
-                message_chat_ids = [387731337]
+                message_chat_ids = [387731337, 343196823]
                 flag = True
+
             for chat_id in message_chat_ids:
                 send_posts_text(text, chat_id)
             config.set('Settings', 'LAST_ID', str(post['id']))
@@ -304,20 +305,25 @@ def send_posts_text(text, message_chat_id):
     if text == '':
         print('no text')
     else:
+        global bot
         # Если слишком много символов, разделяем сообщение
         for msg in split(text):
-            next_message = bot.send_message(message_chat_id, msg, disable_web_page_preview=not PREVIEW_LINK)
-            bot.register_next_step_handler(next_message, check_left_person)
+            next_message = ''
+            try:
+                next_message = bot.send_message(message_chat_id, msg, disable_web_page_preview=not PREVIEW_LINK)
+                print('Не кидок: ', next_message)
+            except telebot.apihelper.ApiException as e:
+                print(e)
+                print('Кидок: ', message_chat_id)
+                left_person(message_chat_id)
+                break
+
             print('отправил')
 
 
-def check_left_person(message):
-    print(message)
-    if message['error_code'] == 403:
-        print('Отлетел беняга')
-    else:
-        print('Остался с нами')
-
+def left_person(chat_id):
+    pass
+    # можно что-то сделать с пользователем который заблокировал бота
 
 def split(text):
     if len(text) >= max_message_length:
@@ -344,15 +350,16 @@ def callback_inline(call):
         check_posts_vk(call.message.chat.id)
 
 
-def bot_telegram_polling(bot):
+def bot_telegram_polling():
     while 1:
         try:
+            global bot
             bot.polling(none_stop=True)
         except Exception as exception:
             print(exception)
 
 
-def vk_post(bot):
+def vk_post():
     # print('hello')
     # while (time.time() - Last_time) > 10:
     #     print('hello')
@@ -365,5 +372,5 @@ def vk_post(bot):
 
 
 if __name__ == '__main__':
-    Thread(target=bot_telegram_polling, args=(bot,)).start()
-    Thread(target=vk_post, args=(bot,)).start()
+    Thread(target=bot_telegram_polling).start()
+    Thread(target=vk_post).start()
