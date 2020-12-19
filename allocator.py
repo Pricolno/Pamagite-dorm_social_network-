@@ -36,17 +36,45 @@ def help(message):
     bot.send_message(message.chat.id, "/room  По комнате узнать кто там живёт\n"
                                       "/surname По фамилии узнать где он живёт\n"
                                       "/help Узнать описание команд\n"
-                                      "/info Узнать свежую полезную информацию")
+                                      "/registration  - Зарегистрироваться в систему (ФИ, комната)\n"
+                                      "/profile - Профиль пользователя\n"
+                                      "/send_message_to_room - Отправить письмо комнате\n"
+                                      "/help Узнать описание команд\n"
+                                      "/start - Повторить приветствие 🤪")
+
+
+def create_main_markup():
+    markup = telebot.types.ReplyKeyboardMarkup(True, True)
+    button_room = telebot.types.KeyboardButton('/room')  # 🏠 room
+    button_surname = telebot.types.KeyboardButton('/surname')  # 🧑‍🎓
+    button_registration = telebot.types.KeyboardButton('/registration')
+    button_profile = telebot.types.KeyboardButton('/profile')
+    button_start = telebot.types.KeyboardButton('/start')
+    markup.row(button_room, button_surname, button_registration, button_profile, button_start)
+    return markup
 
 
 # первое взаимодействие с ботом
 @bot.message_handler(commands=['start'])
 def start(message):
+
+    markup = create_main_markup()
     bot.send_message(message.chat.id, 'Привет, это бот для жителей Дома Студента!\n'
                                       'Здесь вы можете узнать много полезной информции и удобно общаться с соседями!'
-                                      'Используйте /help чтобы узнать команды')
+                                      'Используйте /help чтобы узнать команды', reply_markup=markup)
+
+    #main_keyboard(message)
 
     bot.send_sticker(message.chat.id, 'CAACAgIAAxkBAAJc8V-2w6lq33eMxp9tbsA2ZtBHpH8gAAJ0AAM7YCQUs8te1W3kR_QeBA')
+    #bot.register_next_step_handler(next_message, main_keyboard)
+    #main_keyboard(message)
+
+
+def main_keyboard(message):
+    markup = create_main_markup()
+    #next_message = bot.send_message(message.chat.id, ' gg', reply_markup=markup)
+    bot.send_message(message.chat.id, ' _', reply_markup=markup)
+    #bot.register_next_step_handler(next_message, change_profile)
 
 
 @bot.message_handler(commands=['room'])
