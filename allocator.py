@@ -24,8 +24,7 @@ DOMAIN_TEST = config.get('VK', 'DOMAIN_TEST')
 DOMAIN_MAIN = config.get('VK', 'DOMAIN_MAIN')
 COUNT_TEST = config.get('VK', 'COUNT_TEST')
 COUNT_MAIN = config.get('VK', 'COUNT_MAIN')
-INCLUDE_LINK = config.getboolean('Settings', 'INCLUDE_LINK')
-PREVIEW_LINK = config.getboolean('Settings', 'PREVIEW_LINK')
+PREVIEW_LINK = config.get('Settings', 'PREVIEW_LINK')
 
 message_breakers = [':', ' ', '\n']
 max_message_length = 4091
@@ -39,7 +38,7 @@ def help(message):
                                       "/registration  - Зарегистрироваться в систему (ФИ, комната)\n"
                                       "/profile - Профиль пользователя\n"
                                       "/send_message_to_room - Отправить письмо комнате\n"
-                                      "/help Узнать описание команд\n"
+                                      "/info - узнать свежую полезную информацию\n"
                                       "/start - Повторить приветствие 🤪")
 
 
@@ -57,24 +56,23 @@ def create_main_markup():
 # первое взаимодействие с ботом
 @bot.message_handler(commands=['start'])
 def start(message):
-
     markup = create_main_markup()
     bot.send_message(message.chat.id, 'Привет, это бот для жителей Дома Студента!\n'
                                       'Здесь вы можете узнать много полезной информции и удобно общаться с соседями!'
                                       'Используйте /help чтобы узнать команды', reply_markup=markup)
 
-    #main_keyboard(message)
+    # main_keyboard(message)
 
     bot.send_sticker(message.chat.id, 'CAACAgIAAxkBAAJc8V-2w6lq33eMxp9tbsA2ZtBHpH8gAAJ0AAM7YCQUs8te1W3kR_QeBA')
-    #bot.register_next_step_handler(next_message, main_keyboard)
-    #main_keyboard(message)
+    # bot.register_next_step_handler(next_message, main_keyboard)
+    # main_keyboard(message)
 
 
 def main_keyboard(message):
     markup = create_main_markup()
-    #next_message = bot.send_message(message.chat.id, ' gg', reply_markup=markup)
+    # next_message = bot.send_message(message.chat.id, ' gg', reply_markup=markup)
     bot.send_message(message.chat.id, ' _', reply_markup=markup)
-    #bot.register_next_step_handler(next_message, change_profile)
+    # bot.register_next_step_handler(next_message, change_profile)
 
 
 @bot.message_handler(commands=['room'])
@@ -308,6 +306,7 @@ def check_posts_vk(message_chat_id=None):
         for post in posts:
             text = post['text']
             send_posts_text(text, message_chat_id)
+            send_attachments(message_chat_id, post)
     else:
         posts = get_data(DOMAIN_TEST, COUNT_TEST)
         posts = reversed(posts['items'])
@@ -316,14 +315,17 @@ def check_posts_vk(message_chat_id=None):
             id = config.get('Settings', 'LAST_ID')
             if int(post['id']) <= int(id):
                 continue
-            text = post['text']
+
             if not flag:
                 # message_chat_ids = get_all_chat_ids()
                 message_chat_ids = [387731337, 343196823]
+                # message_chat_ids = [572525878]
                 flag = True
 
             for chat_id in message_chat_ids:
+                text = post['text']
                 send_posts_text(text, chat_id)
+                send_attachments(chat_id, post)
             config.set('Settings', 'LAST_ID', str(post['id']))
             with open(config_path, "w") as config_file:
                 config.write(config_file)
@@ -335,10 +337,10 @@ def send_posts_text(text, message_chat_id):
     else:
         global bot
         # Если слишком много символов, разделяем сообщение
-        for msg in split(text):
+        for message in split(text):
             next_message = ''
             try:
-                next_message = bot.send_message(message_chat_id, msg, disable_web_page_preview=not PREVIEW_LINK)
+                next_message = bot.send_message(message_chat_id, message, disable_web_page_preview=not PREVIEW_LINK)
                 print('Не кидок: ', next_message)
             except telebot.apihelper.ApiException as e:
                 print(e)
@@ -353,6 +355,7 @@ def left_person(chat_id):
     pass
     # можно что-то сделать с пользователем который заблокировал бота
 
+
 def split(text):
     if len(text) >= max_message_length:
         last_index = max(
@@ -362,6 +365,21 @@ def split(text):
         return [good_part] + split(bad_part)
     else:
         return [text]
+
+
+def send_attachments(message_chat_id, post):
+    images = []
+    if 'attachments' in post:
+        attachment = post['attachments']
+        for add in attachment:
+            if add['type'] == 'photo':
+                image = add['photo']
+                images.append(image)
+    if len(images) > 0:
+        image_urls = list(map(lambda image: max(
+            image["sizes"], key=lambda size: size["type"])["url"], images))
+        bot.send_media_group(message_chat_id, map(
+            lambda url: telebot.types.InputMediaPhoto(url), image_urls))
 
 
 @bot.message_handler(commands=['info'])
@@ -388,12 +406,6 @@ def bot_telegram_polling():
 
 
 def vk_post():
-    # print('hello')
-    # while (time.time() - Last_time) > 10:
-    #     print('hello')
-    #     check_posts_vk()
-    #     Last_time = time.time()
-    # print('goodby')
     while True:
         check_posts_vk()
         sleep(10)
