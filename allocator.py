@@ -44,12 +44,14 @@ def help(message):
 
 def create_main_markup():
     markup = telebot.types.ReplyKeyboardMarkup(True, True)
-    button_room = telebot.types.KeyboardButton('/room')  # 🏠 room
-    button_surname = telebot.types.KeyboardButton('/surname')  # 🧑‍🎓
-    button_registration = telebot.types.KeyboardButton('/registration')
-    button_profile = telebot.types.KeyboardButton('/profile')
-    button_start = telebot.types.KeyboardButton('/start')
-    markup.row(button_room, button_surname, button_registration, button_profile, button_start)
+    button_room = telebot.types.KeyboardButton('🏠')  # 🏠 /room
+    button_surname = telebot.types.KeyboardButton('🧑‍🎓')  # 🧑‍🎓 /surname
+    button_registration = telebot.types.KeyboardButton('🛂') # 🛂 /registration
+    button_profile = telebot.types.KeyboardButton('👦')  # 👦 /profile
+    button_send_message_to_room = telebot.types.KeyboardButton('📩')  # 👦 /profile
+    button_start = telebot.types.KeyboardButton('🔙')  # 🔙 /send_message_to_room
+    markup.row(button_room, button_surname, button_registration)
+    markup.row(button_profile, button_send_message_to_room, button_start)
     return markup
 
 
@@ -413,6 +415,24 @@ def vk_post():
     while True:
         check_posts_vk()
         sleep(10)
+
+
+@bot.message_handler(content_types=['text'])
+def allocation_commands(message):
+    if message.text == '🏠':
+        get_room(message)
+    elif message.text == '🧑‍🎓':
+        get_surname(message)
+    elif message.text == '🛂':
+        registration(message)
+    elif message.text == '👦':
+        show_profile(message)
+    elif message.text == '📩':
+        send_message_across_the_room_request(message)
+    elif message.text == '🔙':
+        start(message)
+    else:
+        print('mdaaa')
 
 
 if __name__ == '__main__':
