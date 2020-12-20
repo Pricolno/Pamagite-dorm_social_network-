@@ -32,14 +32,14 @@ max_message_length = 4091
 
 @bot.message_handler(commands=['help'])
 def help(message):
-    bot.send_message(message.chat.id, "/room  По комнате узнать кто там живёт\n"
-                                      "/surname По фамилии узнать где он живёт\n"
-                                      "/help Узнать описание команд\n"
-                                      "/registration  - Зарегистрироваться в систему (ФИ, комната)\n"
-                                      "/profile - Профиль пользователя\n"
-                                      "/send_message_to_room - Отправить письмо комнате\n"
-                                      "/info - узнать свежую полезную информацию\n"
-                                      "/start - Повторить приветствие 🤪")
+    bot.send_message(message.chat.id, "/room 🏠 По комнате узнать кто там живёт\n"
+                                      "/surname 🧑‍🎓 По фамилии узнать где он живёт\n"
+                                      "/registration 🛂  Зарегистрироваться в систему (ФИ, комната)\n"
+                                      "/profile 👦 Профиль пользователя\n"
+                                      "/send_message_to_room 📩 Отправить письмо комнате\n"
+                                      "/info VK - узнать свежую полезную информацию\n"
+                                      "/help 🆘 Узнать описание команд\n"
+                                      "/start 🔙 Повторить приветствие 🤪")
 
 
 def create_main_markup():
@@ -50,8 +50,11 @@ def create_main_markup():
     button_profile = telebot.types.KeyboardButton('👦')  # 👦 /profile
     button_send_message_to_room = telebot.types.KeyboardButton('📩')  # 👦 /profile
     button_start = telebot.types.KeyboardButton('🔙')  # 🔙 /send_message_to_room
+    button_vk = telebot.types.KeyboardButton('VK')  # vk /info
+    button_help = telebot.types.KeyboardButton('🆘')  # 🆘 /help
     markup.row(button_room, button_surname, button_registration)
     markup.row(button_profile, button_send_message_to_room, button_start)
+    markup.row(button_vk, button_help)
     return markup
 
 
@@ -60,7 +63,7 @@ def create_main_markup():
 def start(message):
     markup = create_main_markup()
     bot.send_message(message.chat.id, 'Привет, это бот для жителей Дома Студента!\n'
-                                      'Здесь вы можете узнать много полезной информции и удобно общаться с соседями!'
+                                      'Здесь вы можете узнать много полезной информции и удобно общаться с соседями!\n'
                                       'Используйте /help чтобы узнать команды', reply_markup=markup)
 
     # main_keyboard(message)
@@ -431,6 +434,10 @@ def allocation_commands(message):
         send_message_across_the_room_request(message)
     elif message.text == '🔙':
         start(message)
+    elif message.text == 'VK':
+        get_info(message)
+    elif message.text == '🆘':
+        help(message)
     else:
         print('mdaaa')
 
