@@ -344,7 +344,6 @@ def send_posts_text(text, message_chat_id):
                 print('Не кидок: ', next_message)
             except telebot.apihelper.ApiException as e:
                 print(e)
-                print('Кидок: ', message_chat_id)
                 left_person(message_chat_id)
                 break
 
@@ -352,6 +351,7 @@ def send_posts_text(text, message_chat_id):
 
 
 def left_person(chat_id):
+    print('Кидок: ', chat_id)
     pass
     # можно что-то сделать с пользователем который заблокировал бота
 
@@ -378,8 +378,12 @@ def send_attachments(message_chat_id, post):
     if len(images) > 0:
         image_urls = list(map(lambda image: max(
             image["sizes"], key=lambda size: size["type"])["url"], images))
-        bot.send_media_group(message_chat_id, map(
-            lambda url: telebot.types.InputMediaPhoto(url), image_urls))
+        try:
+            bot.send_media_group(message_chat_id, map(
+                lambda url: telebot.types.InputMediaPhoto(url), image_urls))
+        except telebot.apihelper.ApiException as e:
+            print(e)
+            left_person(message_chat_id)
 
 
 @bot.message_handler(commands=['info'])
