@@ -39,7 +39,7 @@ def help(message):
                                       "/send_message_to_room 📩 Отправить письмо комнате\n"
                                       "/info VK - узнать свежую полезную информацию\n"
                                       "/help 🆘 Узнать описание команд\n"
-                                      "/start 🔙 Повторить приветствие 🤪")
+                                      "/start 🔙 Повторить приветствие")
 
 
 def create_main_markup():
@@ -76,7 +76,8 @@ def start(message):
 def main_keyboard(message):
     markup = create_main_markup()
     # next_message = bot.send_message(message.chat.id, ' gg', reply_markup=markup)
-    bot.send_message(message.chat.id, ' _', reply_markup=markup)
+    bot.send_message(message.chat.id, 'asdasdad')
+    bot.send_sticker(message.chat.id, 'CAACAgIAAxkBAAKJIF_eek6G_jdz5w8l_XqpXB85SQ74AAIeAAPANk8ToWBbLasAAd4EHgQ', reply_markup=markup)
     # bot.register_next_step_handler(next_message, change_profile)
 
 
@@ -241,13 +242,22 @@ def change_profile(message):
         global data_type
         data_type = message.text
         bot.register_next_step_handler(next_message, change_data_in_profile_bot)
+        return
+    if 'exit' in message.text:
+        main_keyboard(message)
+        return
 
 
 def change_data_in_profile_bot(message):
     global data_type
     print(data_type)
     print(message.text)
-    if data_type == 'exit':
+    print('MAIN_KEYBOARD_3')
+    print(data_type)
+    if 'exit' in data_type:
+        print('MAIN_KEYBOARD_0')
+        main_keyboard(message)
+        print('MAIN_KEYBOARD_0')
         return
 
     change_data_in_profile(message.chat.id, data_type, message.text)
