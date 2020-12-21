@@ -76,7 +76,7 @@ def start(message):
 def main_keyboard(message):
     markup = create_main_markup()
     # next_message = bot.send_message(message.chat.id, ' gg', reply_markup=markup)
-    bot.send_message(message.chat.id, 'asdasdad')
+    #bot.send_message(message.chat.id, 'asdasdad')
     bot.send_sticker(message.chat.id, 'CAACAgIAAxkBAAKJIF_eek6G_jdz5w8l_XqpXB85SQ74AAIeAAPANk8ToWBbLasAAd4EHgQ', reply_markup=markup)
     # bot.register_next_step_handler(next_message, change_profile)
 
@@ -448,6 +448,8 @@ def allocation_commands(message):
         get_info(message)
     elif message.text == '🆘':
         help(message)
+    elif message.text == 'exit':
+        main_keyboard(message)
     else:
         print('mdaaa')
 
