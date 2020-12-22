@@ -176,21 +176,33 @@ def get_all_chat_ids():
     return list_chat_ids
 
 
+def add_group(person_id, group_id, group_name):
+
+    db = get_connection()
+
+    db.execute(""" INSERT INTO groups(person_id, group_id, group_name) 
+                        VALUES(?, ?, ?)""", (person_id, group_id, group_name))
+    db.commit()
+
+
+
 
 if __name__ == '__main__':
     init_bd_hostel()
     init_bd_vk_groups()
-    #add_students(surname='Naumtsev', name='Aleksandr', room=620)
-    #add_students(surname='Pety', name='Skovorodnikov', room=230)
-    #add_students(surname='Pety', name='Skovorodnikov', room=230)
-    #res = who_lives_in_room(620)
-    #print(res)
-    #res = where_lives_person(name='Skovorodnikov')
-    #print(res)
-    #print(who_lives_in_room(350))
+    add_group(1234, 567898, "Математика")
 
-    #print('  gg gg   '.split())
-    #print(get_profile('387731337'))
+    # add_students(surname='Naumtsev', name='Aleksandr', room=620)
+    # add_students(surname='Pety', name='Skovorodnikov', room=230)
+    # add_students(surname='Pety', name='Skovorodnikov', room=230)
+    # res = who_lives_in_room(620)
+    # print(res)
+    # res = where_lives_person(name='Skovorodnikov')
+    # print(res)
+    # print(who_lives_in_room(350))
+
+    # print('  gg gg   '.split())
+    # print(get_profile('387731337'))
 
     print(time.time())
     for i in range(1000000):
