@@ -188,7 +188,6 @@ def add_group(person_id, group_id, group_name):
 def delete_group(person_id, group_id: int = None, group_name: str = None):
 
     db = get_connection()
-    cursor = db.cursor()
 
     if group_id is None:
         db.execute(f""" DELETE FROM groups
@@ -199,10 +198,26 @@ def delete_group(person_id, group_id: int = None, group_name: str = None):
 
     db.commit()
 
+
+def get_persons_groups(person_id):
+    db = get_connection()
+    cursor = db.cursor()
+
+    cursor.execute(f"""
+        SELECT group_name FROM groups
+        WHERE person_id = {person_id}
+        ORDER BY group_name
+        """)
+    list_of_group_names = cursor.fetchall()
+    cursor.close()
+    return list_of_group_names
+
 if __name__ == '__main__':
     init_bd_hostel()
     init_bd_vk_groups()
-    add_group(1234, 567898, "Математика")
+    # add_group(1234, 567891, "Информатика")
+    # add_group(1234, 567895, "Английский язык?")
+    # print(get_persons_groups(1234))
     #delete_group(1234, group_name="Математика")
     # add_students(surname='Naumtsev', name='Aleksandr', room=620)
     # add_students(surname='Pety', name='Skovorodnikov', room=230)
