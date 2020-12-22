@@ -32,6 +32,24 @@ def init_bd_hostel(force: bool = False):
     db.commit()
 
 
+def init_bd_vk_groups(force: bool = False):
+
+    db = get_connection()
+    cursor = db.cursor()
+
+    if force:
+        cursor.execute('DROP TABLE IF EXISTS groups')
+
+    query = """ CREATE TABLE IF NOT EXISTS groups( 
+       person_id INTEGER,
+       group_id INTEGER,
+       group_name TEXT
+       )"""
+
+    cursor.execute(query)
+    db.commit()
+
+
 def add_students(surname: str = None, name: str = None, room: int = None, chat_id: int = None):
     not_have = []
     if surname is None:
@@ -50,7 +68,7 @@ def add_students(surname: str = None, name: str = None, room: int = None, chat_i
     db = get_connection()
     cursor = db.cursor()
 
-    if not(chat_id is None):
+    if not chat_id is None:
         db.execute(""" INSERT INTO hostel(surname, name, room, chat_id) 
                     VALUES(?, ?, ?, ?)""", (surname, name, room, chat_id))
     else:
@@ -158,8 +176,10 @@ def get_all_chat_ids():
     return list_chat_ids
 
 
+
 if __name__ == '__main__':
     init_bd_hostel()
+    init_bd_vk_groups()
     #add_students(surname='Naumtsev', name='Aleksandr', room=620)
     #add_students(surname='Pety', name='Skovorodnikov', room=230)
     #add_students(surname='Pety', name='Skovorodnikov', room=230)
