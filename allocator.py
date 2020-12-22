@@ -46,7 +46,7 @@ def create_main_markup():
     markup = telebot.types.ReplyKeyboardMarkup(True, True)
     button_room = telebot.types.KeyboardButton('🏠')  # 🏠 /room
     button_surname = telebot.types.KeyboardButton('🧑‍🎓')  # 🧑‍🎓 /surname
-    button_registration = telebot.types.KeyboardButton('🛂') # 🛂 /registration
+    button_registration = telebot.types.KeyboardButton('🛂')  # 🛂 /registration
     button_profile = telebot.types.KeyboardButton('👦')  # 👦 /profile
     button_send_message_to_room = telebot.types.KeyboardButton('📩')  # 👦 /profile
     button_start = telebot.types.KeyboardButton('🔙')  # 🔙 /send_message_to_room
@@ -77,7 +77,8 @@ def main_keyboard(message):
     markup = create_main_markup()
     # next_message = bot.send_message(message.chat.id, ' gg', reply_markup=markup)
     bot.send_message(message.chat.id, 'asdasdad')
-    bot.send_sticker(message.chat.id, 'CAACAgIAAxkBAAKJIF_eek6G_jdz5w8l_XqpXB85SQ74AAIeAAPANk8ToWBbLasAAd4EHgQ', reply_markup=markup)
+    bot.send_sticker(message.chat.id, 'CAACAgIAAxkBAAKJIF_eek6G_jdz5w8l_XqpXB85SQ74AAIeAAPANk8ToWBbLasAAd4EHgQ',
+                     reply_markup=markup)
     # bot.register_next_step_handler(next_message, change_profile)
 
 
@@ -307,9 +308,13 @@ def send_message_across_the_room_final(message):
         bot.send_message(message.chat.id, 'Мы не знаем кто там живёт :(')
 
 
-def get_data(domain_vk, count_vk):
+def start_vk_session():
     vk_session = vk_api.VkApi(token=ACCESS_TOKEN_VK)
     vk = vk_session.get_api()
+    return vk
+
+def get_data(domain_vk, count_vk):
+    vk = start_vk_session()
     response = vk.wall.get(domain=domain_vk, count=count_vk)
     return response
 
@@ -399,6 +404,41 @@ def send_attachments(message_chat_id, post):
         except telebot.apihelper.ApiException as e:
             print(e)
             left_person(message_chat_id)
+
+
+@bot.message_handler(commands=['vk_management'])
+def get_operation(message):
+    next_message = bot.send_message(message.chat.id, 'Что вы хотите сделать?\nДобавить группу:\nadd ID группы\n'
+                                                     'Удалить группу:\ndelete Id группы/Название группы')
+    bot.register_next_step_handler(next_message, vk_setting)
+
+
+def vk_setting(message):
+    vk_operation = message.text
+    vk_operation = vk_operation.split(" ")
+    # print(owner_room)
+    if not ('delete' == vk_operation[0] or 'add' == vk_operation[0]):
+        next_message = bot.send_message(message.chat.id,
+                                        'Пожалуйста введите корректно команду\nДобавить группу:\nadd ID группы\n'
+                                        'Удалить группу:\ndelete Id группы/Название группы')
+        bot.register_next_step_handler(next_message, vk_setting)
+        return
+
+    if vk_operation[0] == 'add':  # кучу косяков проверка на верный ввод
+        vk = start_vk_session()
+        if not vk_operation[1].isdigit:
+            next_message = bot.send_message(message.chat.id,
+                                            'Пожалуйста введите корректно команду\nДобавить группу:\nadd ID группы\n'
+                                            'Удалить группу:\ndelete Id группы/Название группы')
+            bot.register_next_step_handler(next_message, vk_setting)
+            return
+        else:
+            name_of_group = vk.groups.getById(group_id=vk_operation[1])[0]['name']
+            add_group(message.chat.id, int(vk_operation[1]), name_of_group)
+            bot.send_message(message.chat.id, f'Вы успешно подписались на группу {name_of_group}')
+
+
+
 
 
 @bot.message_handler(commands=['info'])
