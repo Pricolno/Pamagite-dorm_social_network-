@@ -423,38 +423,66 @@ def vk_setting(message):
                                         'Удалить группу:\ndelete Id группы/Название группы')
         bot.register_next_step_handler(next_message, vk_setting)
         return
-
+    if len(vk_operation) == 1:
+        next_message = bot.send_message(message.chat.id,
+                                        'Пожалуйста введите корректно команду\nДобавить группу:\nadd ID группы\n'
+                                        'Удалить группу:\ndelete Id группы/Название группы')
+        bot.register_next_step_handler(next_message, vk_setting)
+        return
     if vk_operation[0] == 'add' and len(vk_operation)!=2:
         next_message = bot.send_message(message.chat.id,
                                         'Пожалуйста введите корректно команду\nДобавить группу:\nadd ID группы\n'
                                         'Удалить группу:\ndelete Id группы/Название группы')
         bot.register_next_step_handler(next_message, vk_setting)
         return
-    elif vk_operation[0] == 'add' and not vk_operation[1].isdigit:
+    if vk_operation[0] == 'add' and not vk_operation[1].isdigit:
         next_message = bot.send_message(message.chat.id,
                                         'Пожалуйста введите корректно команду\nДобавить группу:\nadd ID группы\n'
                                         'Удалить группу:\ndelete Id группы/Название группы')
         bot.register_next_step_handler(next_message, vk_setting)
         return
-    elif vk_operation[0] == 'add':
-        vk = start_vk_session()
-        name_of_group = vk.groups.getById(group_id=vk_operation[1])[0]['name']
-        add_group(message.chat.id, int(vk_operation[1]), name_of_group)
-        next_message = bot.send_message(message.chat.id, f'Вы успешно подписались на группу {name_of_group}')
-        bot.register_next_step_handler(next_message, vk_setting)
-        return
-    # elif vk_operation[0] == 'delete' and len(vk_operation) == 2 and vk_operation[1].isdigit:
-    #     if not is_persons_group(message.chat.id, group_id=int(vk_operation[1])):
-    #         next_message = bot.send_message(message.chat.id,
-    #                                         'К сожалению вы не подписаны на эту группу')
-    #         bot.register_next_step_handler(next_message, vk_setting)
-    #         return
-    #     else:
-    #         delete_group(message.chat.id, group_id=vk_operation[1])
-
-
-
-
+    if vk_operation[0] == 'add':
+        exist, group_name = is_persons_group(message.chat.id, group_id=int(vk_operation[1]))
+        if exist:
+            next_message = bot.send_message(message.chat.id,
+                                            'Вы уже подписаны на эту группу!')
+            bot.register_next_step_handler(next_message, vk_setting)
+            return
+        else:
+            vk = start_vk_session()
+            name_of_group = vk.groups.getById(group_id=vk_operation[1])[0]['name']
+            add_group(message.chat.id, int(vk_operation[1]), name_of_group)
+            next_message = bot.send_message(message.chat.id, f'Вы успешно подписались на группу {name_of_group}')
+            bot.register_next_step_handler(next_message, vk_setting)
+            return
+    if vk_operation[0] == 'delete' and len(vk_operation) == 2 and vk_operation[1].isdigit():
+        exist, group_name = is_persons_group(message.chat.id, group_id=int(vk_operation[1]))
+        if not exist:
+            next_message = bot.send_message(message.chat.id,
+                                            'К сожалению вы не подписаны на эту группу')
+            bot.register_next_step_handler(next_message, vk_setting)
+            return
+        else:
+            delete_group(message.chat.id, group_id=vk_operation[1])
+            next_message = bot.send_message(message.chat.id,
+                                            f'Вы успешно отписались от группы {group_name}')
+            bot.register_next_step_handler(next_message, vk_setting)
+            return
+    if vk_operation[0] == 'delete':
+        group_name = message.text.replace('delete ', '')
+        exist, group_name = is_persons_group(message.chat.id, group_name=group_name)
+        print(exist, group_name)
+        if not exist:
+            next_message = bot.send_message(message.chat.id,
+                                            'К сожалению вы не подписаны на эту группу')
+            bot.register_next_step_handler(next_message, vk_setting)
+            return
+        else:
+            delete_group(message.chat.id, group_name=group_name)
+            next_message = bot.send_message(message.chat.id,
+                                            f'Вы успешно отписались от группы {group_name}')
+            bot.register_next_step_handler(next_message, vk_setting)
+            return
 
 
 

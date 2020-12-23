@@ -188,12 +188,12 @@ def is_persons_group(person_id, group_id: int = None, group_name: str = None):
     if not (group_name is None):
         for group_description in groups:
             if group_description[1] == group_name:
-                return True
+                return True, group_description[1]
     elif not (group_id is None):
         for group_description in groups:
             if group_description[0] == group_id:
-                return True
-    return False
+                return True, group_description[1]
+    return False, ''
 
 
 def delete_group(person_id, group_id: int = None, group_name: str = None):
@@ -201,10 +201,10 @@ def delete_group(person_id, group_id: int = None, group_name: str = None):
 
     if not (group_name is None):
         db.execute(f""" DELETE FROM groups
-                            WHERE person_id = {person_id}; group_name = {group_name}""")
+                            WHERE person_id = {person_id} AND group_name = {"'"+group_name+"'"}""")
     elif not (group_id is None):
         db.execute(f""" DELETE FROM groups
-                                    WHERE person_id = {person_id}; group_id = {group_id}""")
+                                    WHERE person_id = {person_id} AND group_id = {group_id}""")
 
     db.commit()
 
@@ -226,6 +226,8 @@ def get_persons_groups(person_id):
 if __name__ == '__main__':
     init_bd_hostel()
     init_bd_vk_groups()
+    # print(is_persons_group(565387963, group_id=198223558))
+    # delete_group(565387963, group_name="Математика 2020")
     # print(is_pernons_group(565387963, group_name='Математика 2020'))
     # add_group(1234, 567891, "Информатика")
     # add_group(1234, 567895, "Английский язык?")
