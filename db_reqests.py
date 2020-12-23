@@ -1,5 +1,6 @@
 import sqlite3
 import time
+
 path_to_db = 'data_base/hostel.db'
 
 __connection = None
@@ -14,7 +15,6 @@ def get_connection():
 
 
 def init_bd_hostel(force: bool = False):
-
     db = get_connection()
     cursor = db.cursor()
 
@@ -33,7 +33,6 @@ def init_bd_hostel(force: bool = False):
 
 
 def init_bd_vk_groups(force: bool = False):
-
     db = get_connection()
     cursor = db.cursor()
 
@@ -62,13 +61,13 @@ def add_students(surname: str = None, name: str = None, room: int = None, chat_i
         not_have.append('chat_id')
 
     for not_given in not_have:
-        if not(not_given == 'chat_id'):
+        if not (not_given == 'chat_id'):
             return False, not_have
 
     db = get_connection()
     cursor = db.cursor()
 
-    if not chat_id is None:
+    if not (chat_id is None):
         db.execute(""" INSERT INTO hostel(surname, name, room, chat_id) 
                     VALUES(?, ?, ?, ?)""", (surname, name, room, chat_id))
     else:
@@ -85,7 +84,7 @@ def who_lives_in_room(room: int):
 
     cursor.execute("""
     SELECT surname, name, chat_id FROM hostel WHERE room = ?
-    """, (room, ))
+    """, (room,))
     res = cursor.fetchall()
     db.commit()
     cursor.close()
@@ -98,18 +97,17 @@ def who_lives_in_room(room: int):
 
 
 def where_lives_person(surname=None, name=None):
-
     db = get_connection()
     cursor = db.cursor()
 
     if (surname is None) and (name is None):
         cursor.close()
         return False, []
-    elif (surname is None) and not(name is None):
+    elif (surname is None) and not (name is None):
         cursor.execute("""
                         SELECT room, surname, name, chat_id FROM hostel WHERE name=?
                         """, (name,))
-    elif not(surname is None) and (name is None):
+    elif not (surname is None) and (name is None):
         cursor.execute("""
                 SELECT room, surname, name, chat_id FROM hostel WHERE surname=?
                 """, (surname,))
@@ -132,7 +130,7 @@ def get_profile(chat_id):
     cursor = db.cursor()
     cursor.execute("""
     SELECT room, surname, name, chat_id FROM hostel WHERE chat_id=?
-    """, (chat_id, ))
+    """, (chat_id,))
 
     profile = cursor.fetchall()
     db.commit()
@@ -177,7 +175,6 @@ def get_all_chat_ids():
 
 
 def add_group(person_id, group_id, group_name):
-
     db = get_connection()
 
     db.execute(""" INSERT INTO groups(person_id, group_id, group_name) 
@@ -185,14 +182,27 @@ def add_group(person_id, group_id, group_name):
     db.commit()
 
 
-def delete_group(person_id, group_id: int = None, group_name: str = None):
+def is_pernons_group(person_id, group_id: int = None, group_name: str = None):
+    groups = get_persons_groups(person_id)
 
+    if not (group_name is None):
+        for group_description in groups:
+            if group_description[1] == group_name:
+                return True
+    elif not (group_id is None):
+        for group_description in groups:
+            if group_description[0] == group_id:
+                return True
+    return False
+
+
+def delete_group(person_id, group_id: int = None, group_name: str = None):
     db = get_connection()
 
-    if group_id is None:
+    if not (group_name is None):
         db.execute(f""" DELETE FROM groups
                             WHERE person_id = {person_id}; group_name = {group_name}""")
-    elif group_name is None:
+    elif not (group_id is None):
         db.execute(f""" DELETE FROM groups
                                     WHERE person_id = {person_id}; group_id = {group_id}""")
 
@@ -204,7 +214,7 @@ def get_persons_groups(person_id):
     cursor = db.cursor()
 
     cursor.execute(f"""
-        SELECT group_name FROM groups
+        SELECT group_id, group_name FROM groups
         WHERE person_id = {person_id}
         ORDER BY group_name
         """)
@@ -212,13 +222,15 @@ def get_persons_groups(person_id):
     cursor.close()
     return list_of_group_names
 
+
 if __name__ == '__main__':
     init_bd_hostel()
     init_bd_vk_groups()
+    # print(is_pernons_group(565387963, group_name='Математика 2020'))
     # add_group(1234, 567891, "Информатика")
     # add_group(1234, 567895, "Английский язык?")
     # print(get_persons_groups(1234))
-    #delete_group(1234, group_name="Математика")
+    # delete_group(1234, group_name="Математика")
     # add_students(surname='Naumtsev', name='Aleksandr', room=620)
     # add_students(surname='Pety', name='Skovorodnikov', room=230)
     # add_students(surname='Pety', name='Skovorodnikov', room=230)
@@ -233,5 +245,5 @@ if __name__ == '__main__':
 
     print(time.time())
     for i in range(1000000):
-        i+=1
+        i += 1
     print(time.time())
