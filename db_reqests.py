@@ -182,7 +182,7 @@ def add_group(person_id, group_id, group_name):
     db.commit()
 
 
-def is_pernons_group(person_id, group_id: int = None, group_name: str = None):
+def is_persons_group(person_id, group_id: int = None, group_name: str = None):
     groups = get_persons_groups(person_id)
 
     if not (group_name is None):

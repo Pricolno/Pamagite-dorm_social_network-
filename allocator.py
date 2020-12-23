@@ -424,18 +424,35 @@ def vk_setting(message):
         bot.register_next_step_handler(next_message, vk_setting)
         return
 
-    if vk_operation[0] == 'add':  # кучу косяков проверка на верный ввод
+    if vk_operation[0] == 'add' and len(vk_operation)!=2:
+        next_message = bot.send_message(message.chat.id,
+                                        'Пожалуйста введите корректно команду\nДобавить группу:\nadd ID группы\n'
+                                        'Удалить группу:\ndelete Id группы/Название группы')
+        bot.register_next_step_handler(next_message, vk_setting)
+        return
+    elif vk_operation[0] == 'add' and not vk_operation[1].isdigit:
+        next_message = bot.send_message(message.chat.id,
+                                        'Пожалуйста введите корректно команду\nДобавить группу:\nadd ID группы\n'
+                                        'Удалить группу:\ndelete Id группы/Название группы')
+        bot.register_next_step_handler(next_message, vk_setting)
+        return
+    elif vk_operation[0] == 'add':
         vk = start_vk_session()
-        if not vk_operation[1].isdigit:
-            next_message = bot.send_message(message.chat.id,
-                                            'Пожалуйста введите корректно команду\nДобавить группу:\nadd ID группы\n'
-                                            'Удалить группу:\ndelete Id группы/Название группы')
-            bot.register_next_step_handler(next_message, vk_setting)
-            return
-        else:
-            name_of_group = vk.groups.getById(group_id=vk_operation[1])[0]['name']
-            add_group(message.chat.id, int(vk_operation[1]), name_of_group)
-            bot.send_message(message.chat.id, f'Вы успешно подписались на группу {name_of_group}')
+        name_of_group = vk.groups.getById(group_id=vk_operation[1])[0]['name']
+        add_group(message.chat.id, int(vk_operation[1]), name_of_group)
+        next_message = bot.send_message(message.chat.id, f'Вы успешно подписались на группу {name_of_group}')
+        bot.register_next_step_handler(next_message, vk_setting)
+        return
+    # elif vk_operation[0] == 'delete' and len(vk_operation) == 2 and vk_operation[1].isdigit:
+    #     if not is_persons_group(message.chat.id, group_id=int(vk_operation[1])):
+    #         next_message = bot.send_message(message.chat.id,
+    #                                         'К сожалению вы не подписаны на эту группу')
+    #         bot.register_next_step_handler(next_message, vk_setting)
+    #         return
+    #     else:
+    #         delete_group(message.chat.id, group_id=vk_operation[1])
+
+
 
 
 
