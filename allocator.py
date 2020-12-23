@@ -39,7 +39,9 @@ def help(message):
                                       "/send_message_to_room 📩 Отправить письмо комнате\n"
                                       "/info VK - узнать свежую полезную информацию\n"
                                       "/help 🆘 Узнать описание команд\n"
-                                      "/start 🔙 Повторить приветствие")
+                                      "/start 🔙 Повторить приветствие\n"
+                                      "/vk_management Подписка, отписка от групп вк\n"
+                                      "/my_groups Список подписок")
 
 
 def create_main_markup():
@@ -126,8 +128,8 @@ def give_room(message):
     owner_room = owner_room.split(' ')
     if len(owner_room) > 2:
         next_message = bot.send_message(message.chat.id,
-                                        'Пожалуйста введите корректно данные\n Фамилия Имя\n Поиск по одной Фамилия/Имя:\n'
-                                        'surname=Фамилия/Имени')
+                                        'Пожалуйста введите корректно данные\n Фамилия Имя\n Поиск по одной Фамилия'
+                                        '/Имя:\nsurname=Фамилия/Имени')
         bot.register_next_step_handler(next_message, give_room)
         return
     surname, name = None, None
@@ -313,6 +315,7 @@ def start_vk_session():
     vk = vk_session.get_api()
     return vk
 
+
 def get_data(domain_vk, count_vk):
     vk = start_vk_session()
     response = vk.wall.get(domain=domain_vk, count=count_vk)
@@ -358,7 +361,6 @@ def send_posts_text(text, message_chat_id):
         global bot
         # Если слишком много символов, разделяем сообщение
         for message in split(text):
-            next_message = ''
             try:
                 next_message = bot.send_message(message_chat_id, message, disable_web_page_preview=not PREVIEW_LINK)
                 print('Не кидок: ', next_message)
@@ -429,7 +431,7 @@ def vk_setting(message):
                                         'Удалить группу:\ndelete Id группы/Название группы')
         bot.register_next_step_handler(next_message, vk_setting)
         return
-    if vk_operation[0] == 'add' and len(vk_operation)!=2:
+    if vk_operation[0] == 'add' and len(vk_operation) != 2:
         next_message = bot.send_message(message.chat.id,
                                         'Пожалуйста введите корректно команду\nДобавить группу:\nadd ID группы\n'
                                         'Удалить группу:\ndelete Id группы/Название группы')
@@ -444,17 +446,13 @@ def vk_setting(message):
     if vk_operation[0] == 'add':
         exist, group_name = is_persons_group(message.chat.id, group_id=int(vk_operation[1]))
         if exist:
-            next_message = bot.send_message(message.chat.id,
-                                            'Вы уже подписаны на эту группу!')
-            bot.register_next_step_handler(next_message, vk_setting)
-            return
+            bot.send_message(message.chat.id,
+                             'Вы уже подписаны на эту группу!')
         else:
             vk = start_vk_session()
             name_of_group = vk.groups.getById(group_id=vk_operation[1])[0]['name']
             add_group(message.chat.id, int(vk_operation[1]), name_of_group)
-            next_message = bot.send_message(message.chat.id, f'Вы успешно подписались на группу {name_of_group}')
-            bot.register_next_step_handler(next_message, vk_setting)
-            return
+            bot.send_message(message.chat.id, f'Вы успешно подписались на группу {name_of_group}')
     if vk_operation[0] == 'delete' and len(vk_operation) == 2 and vk_operation[1].isdigit():
         exist, group_name = is_persons_group(message.chat.id, group_id=int(vk_operation[1]))
         if not exist:
@@ -464,10 +462,8 @@ def vk_setting(message):
             return
         else:
             delete_group(message.chat.id, group_id=vk_operation[1])
-            next_message = bot.send_message(message.chat.id,
-                                            f'Вы успешно отписались от группы {group_name}')
-            bot.register_next_step_handler(next_message, vk_setting)
-            return
+            bot.send_message(message.chat.id,
+                             f'Вы успешно отписались от группы {group_name}')
     if vk_operation[0] == 'delete':
         group_name = message.text.replace('delete ', '')
         exist, group_name = is_persons_group(message.chat.id, group_name=group_name)
@@ -479,11 +475,20 @@ def vk_setting(message):
             return
         else:
             delete_group(message.chat.id, group_name=group_name)
-            next_message = bot.send_message(message.chat.id,
-                                            f'Вы успешно отписались от группы {group_name}')
-            bot.register_next_step_handler(next_message, vk_setting)
-            return
+            bot.send_message(message.chat.id,
+                             f'Вы успешно отписались от группы {group_name}')
 
+
+@bot.message_handler(commands=['my_groups'])
+def persons_groups(message):
+    list_of_groups = get_persons_groups(message.chat.id)
+    text_of_message = ''
+    for name_of_group in list_of_groups:
+        text_of_message = text_of_message + name_of_group + '\n'
+    if text_of_message == '':
+        bot.send_message(message.chat.id, 'К сожалению, вы не подписаны ни на что')
+    else:
+        bot.send_message(message.chat.id, text_of_message)
 
 
 @bot.message_handler(commands=['info'])
@@ -501,7 +506,7 @@ def callback_inline(call):
 
 
 def bot_telegram_polling():
-    while 1:
+    while True:
         try:
             global bot
             bot.polling(none_stop=True)
