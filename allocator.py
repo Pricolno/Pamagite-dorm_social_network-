@@ -323,7 +323,10 @@ def get_data(count_vk, group_id: int = None, domain: str = None):
     vk = start_vk_session()
     response = []
     if group_id:
-        response = vk.wall.get(owner_id='-'+str(group_id), count=count_vk)
+        try:
+            response = vk.wall.get(owner_id='-'+str(group_id), count=count_vk)
+        except vk_api.ApiError:
+            print('Странная группа')
     if domain:
         response = vk.wall.get(domain=domain, count=count_vk)
     return response
@@ -332,11 +335,15 @@ def get_data(count_vk, group_id: int = None, domain: str = None):
 def check_posts_vk(message_chat_id=None, group_id: int = None):
     if message_chat_id:
         posts = get_data(COUNT_MAIN, group_id=group_id)
-        posts = reversed(posts['items'])
-        for post in posts:
-            text = post['text']
-            send_posts_text(text, message_chat_id)
-            send_attachments(message_chat_id, post)
+        if posts:
+            posts = reversed(posts['items'])
+            for post in posts:
+                text = post['text']
+                send_posts_text(text, message_chat_id)
+                send_attachments(message_chat_id, post)
+        else:
+            bot.send_message(message_chat_id, 'Простите, но эта группа приватная, или закрытая. Мы не можем выдать '
+                                              'Вам новую информацию по ней.')
     else:
         posts = get_data(COUNT_TEST, domain=DOMAIN_TEST)
         posts = reversed(posts['items'])
@@ -513,7 +520,7 @@ def get_info(message):
     list_of_groups = get_persons_groups(message.chat.id)
     print(list_of_groups)
     for group in list_of_groups:
-        markup.add(telebot.types.InlineKeyboardButton(text=group[1], callback_data=group[1]))
+        markup.add(telebot.types.InlineKeyboardButton(text=group[1], callback_data=str(group[0])))
     bot.send_message(message.chat.id, text='Выберите источник информации', reply_markup=markup)
 
 
@@ -522,7 +529,7 @@ def get_info(message):
 def callback_inline(call):
     list_of_groups = get_persons_groups(call.message.chat.id)
     for group in list_of_groups:
-        if call.data == group[1]:
+        if call.data == str(group[0]):
             check_posts_vk(message_chat_id=call.message.chat.id, group_id=group[0])
 
 
