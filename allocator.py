@@ -301,7 +301,6 @@ def send_message_across_the_room_final(message):
     letter = message.text
     exist, persons = who_lives_in_room(request_room)
     if exist:
-        persons_chat_id = []
         bot.send_message(message.chat.id, 'Отправили сообщение:')
         for person in persons:
             bot.send_message(person[2], letter)
@@ -437,21 +436,26 @@ def vk_setting(message):
                                         'Удалить группу:\ndelete Id группы/Название группы')
         bot.register_next_step_handler(next_message, vk_setting)
         return
-    if vk_operation[0] == 'add' and not vk_operation[1].isdigit:
-        next_message = bot.send_message(message.chat.id,
-                                        'Пожалуйста введите корректно команду\nДобавить группу:\nadd ID группы\n'
-                                        'Удалить группу:\ndelete Id группы/Название группы')
-        bot.register_next_step_handler(next_message, vk_setting)
-        return
     if vk_operation[0] == 'add':
-        exist, group_name = is_persons_group(message.chat.id, group_id=int(vk_operation[1]))
+        vk = start_vk_session()
+        name_of_group = ''
+        id_of_group = -1
+        try:
+            name_of_group = vk.groups.getById(group_id=vk_operation[1])[0]['name']
+            id_of_group = int(vk.groups.getById(group_id=vk_operation[1])[0]['id'])
+        except vk_api.ApiError:
+            print('Неправильное короткое название')
+        if name_of_group == '':
+            next_message = bot.send_message(message.chat.id,
+                                            'Пожалуйста, введите правильный идентификатор группы!')
+            bot.register_next_step_handler(next_message, vk_setting)
+            return
+        exist, group_name = is_persons_group(message.chat.id, group_id=id_of_group)
         if exist:
             bot.send_message(message.chat.id,
-                             'Вы уже подписаны на эту группу!')
+                             f'Вы уже подписаны на группу {group_name}!')
         else:
-            vk = start_vk_session()
-            name_of_group = vk.groups.getById(group_id=vk_operation[1])[0]['name']
-            add_group(message.chat.id, int(vk_operation[1]), name_of_group)
+            add_group(message.chat.id, id_of_group, name_of_group)
             bot.send_message(message.chat.id, f'Вы успешно подписались на группу {name_of_group}')
     if vk_operation[0] == 'delete' and len(vk_operation) == 2 and vk_operation[1].isdigit():
         exist, group_name = is_persons_group(message.chat.id, group_id=int(vk_operation[1]))
