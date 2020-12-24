@@ -315,22 +315,26 @@ def start_vk_session():
     return vk
 
 
-def get_data(group_id, count_vk):
+def get_data(count_vk, group_id: int = None, domain: str = None):
     vk = start_vk_session()
-    response = vk.wall.get(owner_id='-'+str(group_id), count=count_vk)
+    response = []
+    if group_id:
+        response = vk.wall.get(owner_id='-'+str(group_id), count=count_vk)
+    if domain:
+        response = vk.wall.get(domain=domain, count=count_vk)
     return response
 
 
 def check_posts_vk(message_chat_id=None, group_id: int = None):
     if message_chat_id:
-        posts = get_data(group_id, COUNT_MAIN)
+        posts = get_data(COUNT_MAIN, group_id=group_id)
         posts = reversed(posts['items'])
         for post in posts:
             text = post['text']
             send_posts_text(text, message_chat_id)
             send_attachments(message_chat_id, post)
     else:
-        posts = get_data(DOMAIN_TEST, COUNT_TEST)
+        posts = get_data(COUNT_TEST, domain=DOMAIN_TEST)
         posts = reversed(posts['items'])
         flag = False
         for post in posts:
@@ -492,7 +496,7 @@ def persons_groups(message):
     list_of_groups = get_persons_groups(message.chat.id)
     text_of_message = ''
     for name_of_group in list_of_groups:
-        text_of_message = text_of_message + name_of_group + '\n'
+        text_of_message = text_of_message + name_of_group[1] + '\n'
     if text_of_message == '':
         bot.send_message(message.chat.id, 'К сожалению, вы не подписаны ни на что')
     else:
