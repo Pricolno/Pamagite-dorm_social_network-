@@ -417,6 +417,11 @@ def get_operation(message):
 def vk_setting(message):
     vk_operation = message.text
     vk_operation = vk_operation.split(" ")
+    exist_in_bd, profile = get_profile(message.chat.id)
+    if not exist_in_bd:
+        bot.send_message(message.chat.id,
+                         'Чтобы иметь возможность подписываться на группы вк, пожалуйста зарегистрируйтесь!')
+        return
     # print(owner_room)
     if not ('delete' == vk_operation[0] or 'add' == vk_operation[0]):
         next_message = bot.send_message(message.chat.id,
@@ -468,7 +473,7 @@ def vk_setting(message):
             delete_group(message.chat.id, group_id=vk_operation[1])
             bot.send_message(message.chat.id,
                              f'Вы успешно отписались от группы {group_name}')
-    if vk_operation[0] == 'delete':
+    elif vk_operation[0] == 'delete':
         group_name = message.text.replace('delete ', '')
         exist, group_name = is_persons_group(message.chat.id, group_name=group_name)
         print(exist, group_name)
