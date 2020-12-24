@@ -39,22 +39,27 @@ def help(message):
                                       "/send_message_to_room 📩 Отправить письмо комнате\n"
                                       "/info VK - узнать свежую полезную информацию\n"
                                       "/help 🆘 Узнать описание команд\n"
-                                      "/start 🔙 Повторить приветствие")
+                                      "/start 🔙 Повторить приветствие\n"
+                                      "/vk_management Подписка, отписка от групп вк\n"
+                                      "/my_groups Список подписок")
 
 
 def create_main_markup():
     markup = telebot.types.ReplyKeyboardMarkup(True, True)
     button_room = telebot.types.KeyboardButton('🏠')  # 🏠 /room
     button_surname = telebot.types.KeyboardButton('🧑‍🎓')  # 🧑‍🎓 /surname
-    button_registration = telebot.types.KeyboardButton('🛂') # 🛂 /registration
+    button_registration = telebot.types.KeyboardButton('🛂')  # 🛂 /registration
     button_profile = telebot.types.KeyboardButton('👦')  # 👦 /profile
-    button_send_message_to_room = telebot.types.KeyboardButton('📩')  # 👦 /profile
-    button_start = telebot.types.KeyboardButton('🔙')  # 🔙 /send_message_to_room
+    button_send_message_to_room = telebot.types.KeyboardButton('📩')  # 🔙 /send_message_to_room
+    button_start = telebot.types.KeyboardButton('🔙')  # 🔙 /start
+    button_vk_manage = telebot.types.KeyboardButton('+/-')  # 🔙 /add or delete vk groups
+    button_groups = telebot.types.KeyboardButton('Группы')  # 🔙 /all user groups
     button_vk = telebot.types.KeyboardButton('VK')  # vk /info
     button_help = telebot.types.KeyboardButton('🆘')  # 🆘 /help
     markup.row(button_room, button_surname, button_registration)
-    markup.row(button_profile, button_send_message_to_room, button_start)
-    markup.row(button_vk, button_help)
+    markup.row(button_profile, button_send_message_to_room, button_help)
+    markup.row(button_vk, button_vk_manage, button_groups)
+    markup.row(button_start)
     return markup
 
 
@@ -77,7 +82,8 @@ def main_keyboard(message):
     markup = create_main_markup()
     # next_message = bot.send_message(message.chat.id, ' gg', reply_markup=markup)
     bot.send_message(message.chat.id, 'asdasdad')
-    bot.send_sticker(message.chat.id, 'CAACAgIAAxkBAAKJIF_eek6G_jdz5w8l_XqpXB85SQ74AAIeAAPANk8ToWBbLasAAd4EHgQ', reply_markup=markup)
+    bot.send_sticker(message.chat.id, 'CAACAgIAAxkBAAKJIF_eek6G_jdz5w8l_XqpXB85SQ74AAIeAAPANk8ToWBbLasAAd4EHgQ',
+                     reply_markup=markup)
     # bot.register_next_step_handler(next_message, change_profile)
 
 
@@ -125,8 +131,8 @@ def give_room(message):
     owner_room = owner_room.split(' ')
     if len(owner_room) > 2:
         next_message = bot.send_message(message.chat.id,
-                                        'Пожалуйста введите корректно данные\n Фамилия Имя\n Поиск по одной Фамилия/Имя:\n'
-                                        'surname=Фамилия/Имени')
+                                        'Пожалуйста введите корректно данные\n Фамилия Имя\n Поиск по одной Фамилия'
+                                        '/Имя:\nsurname=Фамилия/Имени')
         bot.register_next_step_handler(next_message, give_room)
         return
     surname, name = None, None
@@ -139,7 +145,8 @@ def give_room(message):
             name = flag_nick.replace('name=', '').strip()
         else:
             next_message = bot.send_message(message.chat.id,
-                                            'Пожалуйста введите корректно данные\n Фамилия Имя\n Поиск по одной Фамилии/Имени:\n'
+                                            'Пожалуйста введите корректно данные\nФамилия Имя\nПоиск по одной '
+                                            'Фамилии/Имени:\n'
                                             'surname=Фамилия/Имени')
             bot.register_next_step_handler(next_message, give_room)
             return
@@ -298,7 +305,6 @@ def send_message_across_the_room_final(message):
     letter = message.text
     exist, persons = who_lives_in_room(request_room)
     if exist:
-        persons_chat_id = []
         bot.send_message(message.chat.id, 'Отправили сообщение:')
         for person in persons:
             bot.send_message(person[2], letter)
@@ -307,23 +313,32 @@ def send_message_across_the_room_final(message):
         bot.send_message(message.chat.id, 'Мы не знаем кто там живёт :(')
 
 
-def get_data(domain_vk, count_vk):
+def start_vk_session():
     vk_session = vk_api.VkApi(token=ACCESS_TOKEN_VK)
     vk = vk_session.get_api()
-    response = vk.wall.get(domain=domain_vk, count=count_vk)
+    return vk
+
+
+def get_data(count_vk, group_id: int = None, domain: str = None):
+    vk = start_vk_session()
+    response = []
+    if group_id:
+        response = vk.wall.get(owner_id='-'+str(group_id), count=count_vk)
+    if domain:
+        response = vk.wall.get(domain=domain, count=count_vk)
     return response
 
 
-def check_posts_vk(message_chat_id=None):
+def check_posts_vk(message_chat_id=None, group_id: int = None):
     if message_chat_id:
-        posts = get_data(DOMAIN_MAIN, COUNT_MAIN)
+        posts = get_data(COUNT_MAIN, group_id=group_id)
         posts = reversed(posts['items'])
         for post in posts:
             text = post['text']
             send_posts_text(text, message_chat_id)
             send_attachments(message_chat_id, post)
     else:
-        posts = get_data(DOMAIN_TEST, COUNT_TEST)
+        posts = get_data(COUNT_TEST, domain=DOMAIN_TEST)
         posts = reversed(posts['items'])
         flag = False
         for post in posts:
@@ -353,7 +368,6 @@ def send_posts_text(text, message_chat_id):
         global bot
         # Если слишком много символов, разделяем сообщение
         for message in split(text):
-            next_message = ''
             try:
                 next_message = bot.send_message(message_chat_id, message, disable_web_page_preview=not PREVIEW_LINK)
                 print('Не кидок: ', next_message)
@@ -401,22 +415,119 @@ def send_attachments(message_chat_id, post):
             left_person(message_chat_id)
 
 
+@bot.message_handler(commands=['vk_management'])
+def get_operation(message):
+    next_message = bot.send_message(message.chat.id, 'Что вы хотите сделать?\nДобавить группу:\nadd ID группы\n'
+                                                     'Удалить группу:\ndelete Id группы/Название группы')
+    bot.register_next_step_handler(next_message, vk_setting)
+
+
+def vk_setting(message):
+    vk_operation = message.text
+    vk_operation = vk_operation.split(" ")
+    exist_in_bd, profile = get_profile(message.chat.id)
+    if not exist_in_bd:
+        bot.send_message(message.chat.id,
+                         'Чтобы иметь возможность подписываться на группы вк, пожалуйста зарегистрируйтесь!')
+        return
+    # print(owner_room)
+    if not ('delete' == vk_operation[0] or 'add' == vk_operation[0]):
+        next_message = bot.send_message(message.chat.id,
+                                        'Пожалуйста введите корректно команду\nДобавить группу:\nadd ID группы\n'
+                                        'Удалить группу:\ndelete Id группы/Название группы')
+        bot.register_next_step_handler(next_message, vk_setting)
+        return
+    if len(vk_operation) == 1:
+        next_message = bot.send_message(message.chat.id,
+                                        'Пожалуйста введите корректно команду\nДобавить группу:\nadd ID группы\n'
+                                        'Удалить группу:\ndelete Id группы/Название группы')
+        bot.register_next_step_handler(next_message, vk_setting)
+        return
+    if vk_operation[0] == 'add' and len(vk_operation) != 2:
+        next_message = bot.send_message(message.chat.id,
+                                        'Пожалуйста введите корректно команду\nДобавить группу:\nadd ID группы\n'
+                                        'Удалить группу:\ndelete Id группы/Название группы')
+        bot.register_next_step_handler(next_message, vk_setting)
+        return
+    if vk_operation[0] == 'add':
+        vk = start_vk_session()
+        name_of_group = ''
+        id_of_group = -1
+        try:
+            name_of_group = vk.groups.getById(group_id=vk_operation[1])[0]['name']
+            id_of_group = int(vk.groups.getById(group_id=vk_operation[1])[0]['id'])
+        except vk_api.ApiError:
+            print('Неправильное короткое название')
+        if name_of_group == '':
+            next_message = bot.send_message(message.chat.id,
+                                            'Пожалуйста, введите правильный идентификатор группы!')
+            bot.register_next_step_handler(next_message, vk_setting)
+            return
+        exist, group_name = is_persons_group(message.chat.id, group_id=id_of_group)
+        if exist:
+            bot.send_message(message.chat.id,
+                             f'Вы уже подписаны на группу {group_name}!')
+        else:
+            add_group(message.chat.id, id_of_group, name_of_group)
+            bot.send_message(message.chat.id, f'Вы успешно подписались на группу {name_of_group}')
+    if vk_operation[0] == 'delete' and len(vk_operation) == 2 and vk_operation[1].isdigit():
+        exist, group_name = is_persons_group(message.chat.id, group_id=int(vk_operation[1]))
+        if not exist:
+            next_message = bot.send_message(message.chat.id,
+                                            'К сожалению вы не подписаны на эту группу')
+            bot.register_next_step_handler(next_message, vk_setting)
+            return
+        else:
+            delete_group(message.chat.id, group_id=vk_operation[1])
+            bot.send_message(message.chat.id,
+                             f'Вы успешно отписались от группы {group_name}')
+    elif vk_operation[0] == 'delete':
+        group_name = message.text.replace('delete ', '')
+        exist, group_name = is_persons_group(message.chat.id, group_name=group_name)
+        if not exist:
+            next_message = bot.send_message(message.chat.id,
+                                            'К сожалению вы не подписаны на эту группу')
+            bot.register_next_step_handler(next_message, vk_setting)
+            return
+        else:
+            delete_group(message.chat.id, group_name=group_name)
+            bot.send_message(message.chat.id,
+                             f'Вы успешно отписались от группы {group_name}')
+
+
+@bot.message_handler(commands=['my_groups'])
+def persons_groups(message):
+    list_of_groups = get_persons_groups(message.chat.id)
+    text_of_message = ''
+    for name_of_group in list_of_groups:
+        text_of_message = text_of_message + name_of_group[1] + '\n'
+    if text_of_message == '':
+        bot.send_message(message.chat.id, 'К сожалению, вы не подписаны ни на что')
+    else:
+        bot.send_message(message.chat.id, text_of_message)
+
+
 @bot.message_handler(commands=['info'])
 def get_info(message):
     markup = telebot.types.InlineKeyboardMarkup()
-    markup.add(telebot.types.InlineKeyboardButton(text='Лупа и Пупа', callback_data='lypa_group'))
+    list_of_groups = get_persons_groups(message.chat.id)
+    print(list_of_groups)
+    for group in list_of_groups:
+        markup.add(telebot.types.InlineKeyboardButton(text=group[1], callback_data=group[1]))
     bot.send_message(message.chat.id, text='Выберите источник информации', reply_markup=markup)
 
 
 # Inline keyboard
 @bot.callback_query_handler(func=lambda call: True)
 def callback_inline(call):
-    if call.data == 'lypa_group':
-        check_posts_vk(call.message.chat.id)
+    list_of_groups = get_persons_groups(call.message.chat.id)
+    for group in list_of_groups:
+        if call.data == group[1]:
+            check_posts_vk(message_chat_id=call.message.chat.id, group_id=group[0])
 
 
 def bot_telegram_polling():
-    while 1:
+    while True:
         try:
             global bot
             bot.polling(none_stop=True)
@@ -448,6 +559,10 @@ def allocation_commands(message):
         get_info(message)
     elif message.text == '🆘':
         help(message)
+    elif message.text == '+/-':
+        get_operation(message)
+    elif message.text == 'Группы':
+        persons_groups(message)
     else:
         print('mdaaa')
 
