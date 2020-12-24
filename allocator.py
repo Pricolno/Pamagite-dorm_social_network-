@@ -315,15 +315,15 @@ def start_vk_session():
     return vk
 
 
-def get_data(domain_vk, count_vk):
+def get_data(group_id, count_vk):
     vk = start_vk_session()
-    response = vk.wall.get(domain=domain_vk, count=count_vk)
+    response = vk.wall.get(owner_id='-'+str(group_id), count=count_vk)
     return response
 
 
-def check_posts_vk(message_chat_id=None):
+def check_posts_vk(message_chat_id=None, group_id: int = None):
     if message_chat_id:
-        posts = get_data(DOMAIN_MAIN, COUNT_MAIN)
+        posts = get_data(group_id, COUNT_MAIN)
         posts = reversed(posts['items'])
         for post in posts:
             text = post['text']
@@ -476,7 +476,6 @@ def vk_setting(message):
     elif vk_operation[0] == 'delete':
         group_name = message.text.replace('delete ', '')
         exist, group_name = is_persons_group(message.chat.id, group_name=group_name)
-        print(exist, group_name)
         if not exist:
             next_message = bot.send_message(message.chat.id,
                                             'К сожалению вы не подписаны на эту группу')
@@ -503,15 +502,20 @@ def persons_groups(message):
 @bot.message_handler(commands=['info'])
 def get_info(message):
     markup = telebot.types.InlineKeyboardMarkup()
-    markup.add(telebot.types.InlineKeyboardButton(text='Лупа и Пупа', callback_data='lypa_group'))
+    list_of_groups = get_persons_groups(message.chat.id)
+    print(list_of_groups)
+    for group in list_of_groups:
+        markup.add(telebot.types.InlineKeyboardButton(text=group[1], callback_data=group[1]))
     bot.send_message(message.chat.id, text='Выберите источник информации', reply_markup=markup)
 
 
 # Inline keyboard
 @bot.callback_query_handler(func=lambda call: True)
 def callback_inline(call):
-    if call.data == 'lypa_group':
-        check_posts_vk(call.message.chat.id)
+    list_of_groups = get_persons_groups(call.message.chat.id)
+    for group in list_of_groups:
+        if call.data == group[1]:
+            check_posts_vk(message_chat_id=call.message.chat.id, group_id=group[0])
 
 
 def bot_telegram_polling():
