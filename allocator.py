@@ -50,13 +50,16 @@ def create_main_markup():
     button_surname = telebot.types.KeyboardButton('🧑‍🎓')  # 🧑‍🎓 /surname
     button_registration = telebot.types.KeyboardButton('🛂')  # 🛂 /registration
     button_profile = telebot.types.KeyboardButton('👦')  # 👦 /profile
-    button_send_message_to_room = telebot.types.KeyboardButton('📩')  # 👦 /profile
-    button_start = telebot.types.KeyboardButton('🔙')  # 🔙 /send_message_to_room
+    button_send_message_to_room = telebot.types.KeyboardButton('📩')  # 🔙 /send_message_to_room
+    button_start = telebot.types.KeyboardButton('🔙')  # 🔙 /start
+    button_vk_manage = telebot.types.KeyboardButton('+/-')  # 🔙 /add or delete vk groups
+    button_groups = telebot.types.KeyboardButton('Группы')  # 🔙 /all user groups
     button_vk = telebot.types.KeyboardButton('VK')  # vk /info
     button_help = telebot.types.KeyboardButton('🆘')  # 🆘 /help
     markup.row(button_room, button_surname, button_registration)
-    markup.row(button_profile, button_send_message_to_room, button_start)
-    markup.row(button_vk, button_help)
+    markup.row(button_profile, button_send_message_to_room, button_help)
+    markup.row(button_vk, button_vk_manage, button_groups)
+    markup.row(button_start)
     return markup
 
 
@@ -142,7 +145,8 @@ def give_room(message):
             name = flag_nick.replace('name=', '').strip()
         else:
             next_message = bot.send_message(message.chat.id,
-                                            'Пожалуйста введите корректно данные\n Фамилия Имя\n Поиск по одной Фамилии/Имени:\n'
+                                            'Пожалуйста введите корректно данные\nФамилия Имя\nПоиск по одной '
+                                            'Фамилии/Имени:\n'
                                             'surname=Фамилия/Имени')
             bot.register_next_step_handler(next_message, give_room)
             return
@@ -555,6 +559,10 @@ def allocation_commands(message):
         get_info(message)
     elif message.text == '🆘':
         help(message)
+    elif message.text == '+/-':
+        get_operation(message)
+    elif message.text == 'Группы':
+        persons_groups(message)
     else:
         print('mdaaa')
 
