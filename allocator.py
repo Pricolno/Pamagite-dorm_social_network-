@@ -208,8 +208,14 @@ def registration_add_in_bd(message):
     room = int(list_name_room[2])
     chat_id = message.chat.id
     add_students(surname=surname, name=name, room=room, chat_id=chat_id)
-
+    add_default_groups()
     bot.send_message(message.chat.id, 'Пользователь успешно добавлен в систему')
+
+
+def add_default_groups(chat_id):
+    add_group(chat_id, 201076349, 'test')
+    add_group(chat_id, 181027969, 'Лупа и Пупа')
+    add_group(chat_id, 198223558, 'Математика 2020')
 
 
 @bot.message_handler(commands=['profile'])
@@ -345,20 +351,25 @@ def check_posts_vk(message_chat_id=None, group_id: int = None):
             bot.send_message(message_chat_id, 'Простите, но эта группа приватная, или закрытая. Мы не можем выдать '
                                               'Вам новую информацию по ней.')
     else:
-        # message_chat_ids = get_all_chat_ids()
         message_chat_ids = [565387963]
         for chat_id in message_chat_ids:
             groups = get_persons_groups(chat_id)
             for group in groups:
                 group_id = group[0]
-                posts = get_data(COUNT_MAIN, group_id=group_id)
-                posts = reversed(posts['items'])
-                last_post_id = get_last_post_id(group_id)
-                for post in posts:
+                group_name = group[1]
+                post = get_data(COUNT_MAIN, group_id=group_id)
+                if post:
+                    post = post['items'][0]
+                    last_post_id = get_last_post_id(group_id)
                     if int(post['id']) > last_post_id:
                         text = post['text']
+                        bot.send_message(chat_id, f'Новая информация из группы {group_name}:')
                         send_posts_text(text, chat_id)
                         send_attachments(chat_id, post)
+                else:
+                    bot.send_message(message_chat_id,
+                                     f'Простите, но группа {group_name} приватная, или закрытая. Мы не можем выдать '
+                                     'Вам новую информацию по ней.')
         groups = get_all_groups()
         for group in groups:
             group_id = group[0]
@@ -366,8 +377,6 @@ def check_posts_vk(message_chat_id=None, group_id: int = None):
             post_id_last = get_data(1, group_id)['items'][0]['id']
             if post_id != int(post_id_last):
                 update_last_post_id(group_id, post_id_last)
-
-
 
 
 def send_posts_text(text, message_chat_id):
@@ -480,7 +489,7 @@ def vk_setting(message):
             add_group(message.chat.id, id_of_group, name_of_group)
             exist_among_others = is_new_group(id_of_group)
             if exist_among_others:
-                last_post_id = get_data(COUNT_TEST, id_of_group)['items'][0]['id']
+                last_post_id = get_data(COUNT_MAIN, id_of_group)['items'][0]['id']
                 add_new_post(id_of_group, int(last_post_id))
             bot.send_message(message.chat.id, f'Вы успешно подписались на группу {name_of_group}')
     if vk_operation[0] == 'delete' and len(vk_operation) == 2 and vk_operation[1].isdigit():
