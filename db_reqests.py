@@ -265,6 +265,18 @@ def delete_post(group_id):
     db.commit()
 
 
+def get_all_groups():
+    db = get_connection()
+    cursor = db.cursor()
+
+    cursor.execute(f"""
+            SELECT group_id, post_id FROM posts
+            """)
+    list_of_group_names = cursor.fetchall()
+    cursor.close()
+    return list_of_group_names
+
+
 def get_last_post_id(group_id):
     db = get_connection()
     cursor = db.cursor()
@@ -299,6 +311,7 @@ if __name__ == '__main__':
     init_bd_hostel()
     init_bd_vk_groups()
     init_bd_last_posts()
+    print(get_all_groups())
     # print(is_persons_group(565387963, group_id=198223558))
     # delete_group(565387963, group_name="Математика 2020")
     # print(is_pernons_group(565387963, group_name='Математика 2020'))
