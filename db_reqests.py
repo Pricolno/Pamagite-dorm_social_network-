@@ -247,6 +247,16 @@ def add_new_post(group_id, post_id):
     db.commit()
 
 
+def delete_post(group_id):
+    db = get_connection()
+
+    db.execute(f""" DELETE FROM posts
+                                WHERE group_id = {group_id}""")
+
+    db.commit()
+
+
+
 if __name__ == '__main__':
     init_bd_hostel()
     init_bd_vk_groups()
