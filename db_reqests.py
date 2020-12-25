@@ -239,6 +239,23 @@ def get_persons_groups(person_id):
     return list_of_group_names
 
 
+def is_new_group(group_id):
+    db = get_connection()
+    cursor = db.cursor()
+
+    cursor.execute(f"""
+            SELECT post_id FROM posts
+            WHERE group_id = {group_id}
+            """)
+    list_of_group_names = cursor.fetchall()
+    cursor.close()
+
+    if list_of_group_names:
+        return False
+
+    return True
+
+
 def add_new_post(group_id, post_id):
     db = get_connection()
 
