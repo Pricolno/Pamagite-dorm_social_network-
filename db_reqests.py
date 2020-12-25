@@ -239,6 +239,14 @@ def get_persons_groups(person_id):
     return list_of_group_names
 
 
+def add_new_post(group_id, post_id):
+    db = get_connection()
+
+    db.execute(""" INSERT INTO posts(group_id, post_id) 
+                            VALUES(?, ?)""", (group_id, post_id))
+    db.commit()
+
+
 if __name__ == '__main__':
     init_bd_hostel()
     init_bd_vk_groups()
