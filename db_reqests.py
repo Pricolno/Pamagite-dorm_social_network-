@@ -240,17 +240,9 @@ def get_persons_groups(person_id):
 
 
 def is_new_group(group_id):
-    db = get_connection()
-    cursor = db.cursor()
+    last_post_id = get_last_post_id(group_id)
 
-    cursor.execute(f"""
-            SELECT post_id FROM posts
-            WHERE group_id = {group_id}
-            """)
-    list_of_group_names = cursor.fetchall()
-    cursor.close()
-
-    if list_of_group_names:
+    if last_post_id:
         return False
 
     return True
@@ -271,6 +263,20 @@ def delete_post(group_id):
                                 WHERE group_id = {group_id}""")
 
     db.commit()
+
+
+def get_last_post_id(group_id):
+    db = get_connection()
+    cursor = db.cursor()
+
+    cursor.execute(f"""
+                SELECT post_id FROM posts
+                WHERE group_id = {group_id}
+                """)
+    last_post_id = cursor.fetchall()
+    cursor.close()
+
+    return last_post_id
 
 
 
