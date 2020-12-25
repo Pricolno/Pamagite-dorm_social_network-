@@ -478,6 +478,10 @@ def vk_setting(message):
                              f'Вы уже подписаны на группу {group_name}!')
         else:
             add_group(message.chat.id, id_of_group, name_of_group)
+            exist_among_others = is_new_group(id_of_group)
+            if exist_among_others:
+                last_post_id = get_data(COUNT_TEST, id_of_group)['items'][0]['id']
+                add_new_post(id_of_group, int(last_post_id))
             bot.send_message(message.chat.id, f'Вы успешно подписались на группу {name_of_group}')
     if vk_operation[0] == 'delete' and len(vk_operation) == 2 and vk_operation[1].isdigit():
         exist, group_name = is_persons_group(message.chat.id, group_id=int(vk_operation[1]))
