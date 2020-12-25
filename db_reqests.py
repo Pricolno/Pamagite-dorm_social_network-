@@ -49,6 +49,22 @@ def init_bd_vk_groups(force: bool = False):
     db.commit()
 
 
+def init_bd_last_posts(force: bool = False):
+    db = get_connection()
+    cursor = db.cursor()
+
+    if force:
+        cursor.execute('DROP TABLE IF EXISTS posts')
+
+    query = """ CREATE TABLE IF NOT EXISTS posts( 
+           group_id INTEGER,
+           post_id INTEGER
+           )"""
+
+    cursor.execute(query)
+    db.commit()
+
+
 def add_students(surname: str = None, name: str = None, room: int = None, chat_id: int = None):
     not_have = []
     if surname is None:
@@ -226,6 +242,7 @@ def get_persons_groups(person_id):
 if __name__ == '__main__':
     init_bd_hostel()
     init_bd_vk_groups()
+    init_bd_last_posts()
     # print(is_persons_group(565387963, group_id=198223558))
     # delete_group(565387963, group_name="Математика 2020")
     # print(is_pernons_group(565387963, group_name='Математика 2020'))
