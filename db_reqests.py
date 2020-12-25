@@ -275,9 +275,24 @@ def get_last_post_id(group_id):
                 """)
     last_post_id = cursor.fetchall()
     cursor.close()
-
+    if last_post_id:
+        return last_post_id[0][0]
     return last_post_id
 
+
+def update_last_post_id(group_id, post_id):
+    db = get_connection()
+    cursor = db.cursor()
+
+    sql = f"""
+        UPDATE posts 
+        SET post_id = '{post_id}'
+        WHERE group_id = '{group_id} ' 
+        """
+
+    cursor.execute(sql)
+    db.commit()
+    cursor.close()
 
 
 if __name__ == '__main__':
