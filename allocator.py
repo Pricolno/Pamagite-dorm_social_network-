@@ -345,27 +345,29 @@ def check_posts_vk(message_chat_id=None, group_id: int = None):
             bot.send_message(message_chat_id, 'Простите, но эта группа приватная, или закрытая. Мы не можем выдать '
                                               'Вам новую информацию по ней.')
     else:
-        posts = get_data(COUNT_TEST, domain=DOMAIN_TEST)
-        posts = reversed(posts['items'])
-        flag = False
-        for post in posts:
-            id = config.get('Settings', 'LAST_ID')
-            if int(post['id']) <= int(id):
-                continue
+        # message_chat_ids = get_all_chat_ids()
+        message_chat_ids = [565387963]
+        for chat_id in message_chat_ids:
+            groups = get_persons_groups(chat_id)
+            for group in groups:
+                group_id = group[0]
+                posts = get_data(COUNT_MAIN, group_id=group_id)
+                posts = reversed(posts['items'])
+                last_post_id = get_last_post_id(group_id)
+                for post in posts:
+                    if int(post['id']) > last_post_id:
+                        text = post['text']
+                        send_posts_text(text, chat_id)
+                        send_attachments(chat_id, post)
+        groups = get_all_groups()
+        for group in groups:
+            group_id = group[0]
+            post_id = group[1]
+            post_id_last = get_data(1, group_id)['items'][0]['id']
+            if post_id != int(post_id_last):
+                update_last_post_id(group_id, post_id_last)
 
-            if not flag:
-                # message_chat_ids = get_all_chat_ids()
-                message_chat_ids = [387731337, 343196823]
-                # message_chat_ids = [572525878]
-                flag = True
 
-            for chat_id in message_chat_ids:
-                text = post['text']
-                send_posts_text(text, chat_id)
-                send_attachments(chat_id, post)
-            config.set('Settings', 'LAST_ID', str(post['id']))
-            with open(config_path, "w") as config_file:
-                config.write(config_file)
 
 
 def send_posts_text(text, message_chat_id):
