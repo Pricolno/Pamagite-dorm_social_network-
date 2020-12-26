@@ -208,7 +208,7 @@ def registration_add_in_bd(message):
     room = int(list_name_room[2])
     chat_id = message.chat.id
     add_students(surname=surname, name=name, room=room, chat_id=chat_id)
-    add_default_groups()
+    add_default_groups(message.chat.id)
     bot.send_message(message.chat.id, 'Пользователь успешно добавлен в систему')
 
 
@@ -351,7 +351,7 @@ def check_posts_vk(message_chat_id=None, group_id: int = None):
             bot.send_message(message_chat_id, 'Простите, но эта группа приватная, или закрытая. Мы не можем выдать '
                                               'Вам новую информацию по ней.')
     else:
-        message_chat_ids = [565387963]
+        message_chat_ids = [565387963, 524175600]
         for chat_id in message_chat_ids:
             groups = get_persons_groups(chat_id)
             for group in groups:
