@@ -24,7 +24,6 @@ DOMAIN_TEST = config.get('VK', 'DOMAIN_TEST')
 DOMAIN_MAIN = config.get('VK', 'DOMAIN_MAIN')
 COUNT_TEST = config.get('VK', 'COUNT_TEST')
 COUNT_MAIN = config.get('VK', 'COUNT_MAIN')
-PREVIEW_LINK = config.get('Settings', 'PREVIEW_LINK')
 
 message_breakers = [':', ' ', '\n']
 max_message_length = 4091
@@ -330,7 +329,7 @@ def get_data(count_vk, group_id: int = None, domain: str = None):
     response = []
     if group_id:
         try:
-            response = vk.wall.get(owner_id='-'+str(group_id), count=count_vk)
+            response = vk.wall.get(owner_id='-' + str(group_id), count=count_vk)
         except vk_api.ApiError:
             print('Странная группа')
     if domain:
@@ -338,43 +337,44 @@ def get_data(count_vk, group_id: int = None, domain: str = None):
     return response
 
 
-def check_posts_vk(message_chat_id=None, group_id: int = None):
-    if message_chat_id:
-        posts = get_data(COUNT_MAIN, group_id=group_id)
-        if posts:
-            posts = reversed(posts['items'])
-            for post in posts:
-                text = post['text']
-                send_posts_text(text, message_chat_id)
-                send_attachments(message_chat_id, post)
-        else:
-            bot.send_message(message_chat_id, 'Простите, но эта группа приватная, или закрытая. Мы не можем выдать '
-                                              'Вам новую информацию по ней.')
+def send_posts_vk_with_button(message_chat_id, group_id: int = None):
+    posts = get_data(COUNT_MAIN, group_id=group_id)
+    if posts:
+        posts = reversed(posts['items'])
+        for post in posts:
+            text = post['text']
+            send_posts_text(text, message_chat_id)
+            send_attachments(message_chat_id, post)
     else:
-        message_chat_ids = [565387963, 524175600]
-        for chat_id in message_chat_ids:
-            groups = get_persons_groups(chat_id)
-            for group in groups:
-                group_id = group[0]
-                group_name = group[1]
-                post = get_data(COUNT_MAIN, group_id=group_id)
-                if post:
-                    post = post['items'][0]
-                    last_post_id = get_last_post_id(group_id)
-                    if int(post['id']) > last_post_id:
-                        text = post['text']
-                        bot.send_message(chat_id, f'Новая информация из группы {group_name}:')
-                        send_posts_text(text, chat_id)
-                        send_attachments(chat_id, post)
-        groups = get_all_groups()
+        bot.send_message(message_chat_id, 'Простите, но эта группа приватная, или закрытая. Мы не можем выдать '
+                                          'Вам новую информацию по ней.')
+
+
+def send_posts_vk_continuously():
+    message_chat_ids = [565387963, 524175600]
+    for chat_id in message_chat_ids:
+        groups = get_persons_groups(chat_id)
         for group in groups:
             group_id = group[0]
-            post_id = group[1]
-            post_id_last = get_data(COUNT_MAIN, group_id)
-            if post_id_last:
-                post_id_last = post_id_last['items'][0]['id']
-                if post_id != int(post_id_last):
-                    update_last_post_id(group_id, post_id_last)
+            group_name = group[1]
+            post = get_data(COUNT_MAIN, group_id=group_id)
+            if post:
+                post = post['items'][0]
+                last_post_id = get_last_post_id(group_id)
+                if int(post['id']) > last_post_id:
+                    text = post['text']
+                    bot.send_message(chat_id, f'Новая информация из группы {group_name}:')
+                    send_posts_text(text, chat_id)
+                    send_attachments(chat_id, post)
+    groups = get_all_groups()
+    for group in groups:
+        group_id = group[0]
+        post_id = group[1]
+        post_id_last = get_data(COUNT_MAIN, group_id)
+        if post_id_last:
+            post_id_last = post_id_last['items'][0]['id']
+            if post_id != int(post_id_last):
+                update_last_post_id(group_id, post_id_last)
 
 
 def send_posts_text(text, message_chat_id):
@@ -385,7 +385,7 @@ def send_posts_text(text, message_chat_id):
         # Если слишком много символов, разделяем сообщение
         for message in split(text):
             try:
-                next_message = bot.send_message(message_chat_id, message, disable_web_page_preview=not PREVIEW_LINK)
+                next_message = bot.send_message(message_chat_id, message, disable_web_page_preview=True)
                 print('Не кидок: ', next_message)
             except telebot.apihelper.ApiException as e:
                 print(e)
@@ -548,7 +548,7 @@ def callback_inline(call):
     list_of_groups = get_persons_groups(call.message.chat.id)
     for group in list_of_groups:
         if call.data == str(group[0]):
-            check_posts_vk(message_chat_id=call.message.chat.id, group_id=group[0])
+            send_posts_vk_with_button(message_chat_id=call.message.chat.id, group_id=group[0])
 
 
 def bot_telegram_polling():
@@ -562,7 +562,7 @@ def bot_telegram_polling():
 
 def vk_post():
     while True:
-        check_posts_vk()
+        send_posts_vk_continuously()
         sleep(10)
 
 
