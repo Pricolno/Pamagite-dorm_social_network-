@@ -1,6 +1,5 @@
 from threading import Thread
 
-from config import Token
 import telebot
 from db_reqests import *
 import os
@@ -9,13 +8,15 @@ import vk_api
 import configparser
 from time import sleep
 
-bot = telebot.TeleBot(Token)
 
 config_path = os.path.join(sys.path[0], 'settings.ini')
 config = configparser.ConfigParser()
 config.read(config_path)
 ACCESS_TOKEN_VK = config.get('VK', 'ACCESS_TOKEN_VK')
-COUNT_MAIN = 1
+TELEGRAM_TOKEN = config.get('Telegram', 'TOKEN')
+COUNT_OF_VIEWED_POSTS = 1
+
+bot = telebot.TeleBot(TELEGRAM_TOKEN)
 
 message_breakers = [':', ' ', '\n']
 max_message_length = 4091
@@ -23,6 +24,9 @@ max_message_length = 4091
 
 @bot.message_handler(commands=['help'])
 def help(message):
+    """
+    Shows description of all commands
+    """
     bot.send_message(message.chat.id, "/room 🏠 По комнате узнать кто там живёт\n"
                                       "/surname 🧑‍🎓 По фамилии узнать где он живёт\n"
                                       "/registration 🛂  Зарегистрироваться в систему (ФИ, комната)\n"
@@ -36,6 +40,9 @@ def help(message):
 
 
 def create_main_markup():
+    """
+    Creates buttons that perform commands
+    """
     markup = telebot.types.ReplyKeyboardMarkup(True, True)
     button_room = telebot.types.KeyboardButton('🏠')  # 🏠 /room
     button_surname = telebot.types.KeyboardButton('🧑‍🎓')  # 🧑‍🎓 /surname
@@ -66,6 +73,9 @@ def start(message):
 
 
 def main_keyboard(message):
+    """
+    Displays the buttons created in create_main_keyboard function
+    """
     markup = create_main_markup()
     bot.send_sticker(message.chat.id, 'CAACAgIAAxkBAAKJIF_eek6G_jdz5w8l_XqpXB85SQ74AAIeAAPANk8ToWBbLasAAd4EHgQ',
                      reply_markup=markup)
@@ -73,11 +83,17 @@ def main_keyboard(message):
 
 @bot.message_handler(commands=['room'])
 def get_room(message):
+    """
+    Prompts the user to enter a room number to find out who lives there
+    """
     next_message = bot.send_message(message.chat.id, 'В какой комнате вы хотите узнать кто живёт?')
     bot.register_next_step_handler(next_message, give_name)
 
 
 def give_name(message):
+    """
+    Shows who lives in a previously defined room
+    """
     room = message.text
     if not room.isdigit():
         next_message = bot.send_message(message.chat.id, 'Вы ввели не число, напишите число')
@@ -103,12 +119,18 @@ def give_name(message):
 
 @bot.message_handler(commands=['surname'])
 def get_surname(message):
+    """
+    Prompts the user to enter a surname to find out where he/she lives
+    """
     next_message = bot.send_message(message.chat.id, 'Чьё местопроживание вас интересует?\n Фамилия Имя\n'
                                                      'Поиск по одной Фамилия/Имя:\nsurname=Фамилия/Имени')
     bot.register_next_step_handler(next_message, give_room)
 
 
 def give_room(message):
+    """
+    Shows in what room a previously defined person lives
+    """
     owner_room = message.text
     owner_room = owner_room.split(' ')
     if len(owner_room) > 2:
@@ -148,6 +170,9 @@ def give_room(message):
 
 @bot.message_handler(commands=['registration'])
 def registration(message):
+    """
+    Prompts the user to register in StudentsHouseBot, enter his/her surname, name, number of room
+    """
     is_existed, profile = get_profile(message.chat.id)
     if is_existed:
         bot.send_message(message.chat.id, "Вы уже зарегистрированы\n Если вы хотите изменить данные зайдите в профиль")
@@ -163,6 +188,9 @@ def registration(message):
 
 
 def exception_registration_add_in_bd(message):
+    """
+    Captures error in registration
+    """
     next_message = bot.send_message(message.chat.id, """
         Введите пожалуйста корректные данные
         Фамилия 
@@ -174,6 +202,9 @@ def exception_registration_add_in_bd(message):
 
 
 def registration_add_in_bd(message):
+    """
+    Adds information from registration to database
+    """
     list_name_room = message.text.split('\n')
     if len(list_name_room) != 3:
         exception_registration_add_in_bd(message)
@@ -200,6 +231,9 @@ def add_default_groups(chat_id):
 
 @bot.message_handler(commands=['profile'])
 def show_profile(message):
+    """
+    Shows information about user, prompts to change surname, name or room
+    """
     chat_id = message.chat.id
     exist, profile = get_profile(chat_id)
     if exist:
@@ -230,6 +264,9 @@ data_type = ''
 
 
 def change_profile(message):
+    """
+    Prompts the user to change profile
+    """
     if message.text in ['surname', 'name', 'room']:
         next_message = bot.send_message(message.chat.id, 'Введите желаемые изменения')
         global data_type
@@ -242,6 +279,9 @@ def change_profile(message):
 
 
 def change_data_in_profile_bot(message):
+    """
+    Directly changes the data in the profile
+    """
     global data_type
     if 'exit' in data_type:
         main_keyboard(message)
@@ -263,6 +303,11 @@ def change_data_in_profile_bot(message):
 
 @bot.message_handler(commands=['send_message_to_room'])
 def send_message_across_the_room_request(message):
+    """
+    Prompts the user to send message to other room, enter number of the room
+    :param message:
+    :return:
+    """
     next_message = bot.send_message(message.chat.id, 'Какой комнате вы хотите отправить сообщение?')
     bot.register_next_step_handler(next_message, send_message_across_the_room)
 
@@ -271,6 +316,9 @@ request_room = -1
 
 
 def send_message_across_the_room(message):
+    """
+    Prompts the user to enter message to other room
+    """
     global request_room
     if message.text.isdigit():
         request_room = int(message.text)
@@ -281,6 +329,9 @@ def send_message_across_the_room(message):
 
 
 def send_message_across_the_room_final(message):
+    """
+    Directly sends message to other room
+    """
     global request_room
     letter = message.text
     is_existed, persons = who_lives_in_room(request_room)
@@ -294,12 +345,18 @@ def send_message_across_the_room_final(message):
 
 
 def start_vk_session():
+    """
+    Connects with vk api
+    """
     vk_session = vk_api.VkApi(token=ACCESS_TOKEN_VK)
     vk = vk_session.get_api()
     return vk
 
 
 def get_data(count_vk, group_id):
+    """
+    Receives information about the last n(=count_vk) posts of the group(=group_id)
+    """
     vk = start_vk_session()
     response = []
     try:
@@ -311,7 +368,10 @@ def get_data(count_vk, group_id):
 
 
 def send_posts_vk_with_button(message_chat_id, group_id: int = None):
-    posts = get_data(COUNT_MAIN, group_id=group_id)
+    """
+    Sends last post of the group to the user who pressed the button after /info command
+    """
+    posts = get_data(COUNT_OF_VIEWED_POSTS, group_id=group_id)
     if posts:
         posts = posts['items']
         for post in posts:
@@ -324,13 +384,16 @@ def send_posts_vk_with_button(message_chat_id, group_id: int = None):
 
 
 def send_posts_vk_continuously():
+    """
+    Sends group posts to which the user subscribed as soon as they have been published
+    """
     message_chat_ids = [565387963, 387731337]
     for chat_id in message_chat_ids:
         groups = get_persons_groups(chat_id)
         for group in groups:
             group_id = group[0]
             group_name = group[1]
-            post = get_data(COUNT_MAIN, group_id=group_id)
+            post = get_data(COUNT_OF_VIEWED_POSTS, group_id=group_id)
             if post:
                 post = post['items'][0]
                 last_post_id = get_last_post_id(group_id)
@@ -342,7 +405,7 @@ def send_posts_vk_continuously():
     for group in groups:
         group_id = group[0]
         post_id = group[1]
-        post_id_last = get_data(COUNT_MAIN, group_id)
+        post_id_last = get_data(COUNT_OF_VIEWED_POSTS, group_id)
         if post_id_last:
             post_id_last = post_id_last['items'][0]['id']
             if post_id != int(post_id_last):
@@ -350,6 +413,9 @@ def send_posts_vk_continuously():
 
 
 def send_posts_text(text, message_chat_id, group_name: str = None):
+    """
+    Parses text of the post and sends it to the user
+    """
     if text != '':
         # Если слишком много символов, разделяем сообщение
         for message in split_text(text):
@@ -363,6 +429,9 @@ def send_posts_text(text, message_chat_id, group_name: str = None):
 
 
 def split_text(text):
+    """
+    Splits the text for parts if length of the text is bigger then max_message_length
+    """
     if len(text) >= max_message_length:
         last_index = max(
             map(lambda separator: text.rfind(separator, 0, max_message_length), message_breakers))
@@ -374,6 +443,9 @@ def split_text(text):
 
 
 def send_attachments(message_chat_id, post):
+    """
+    Parses images and sends it to the user
+    """
     images = []
     if 'attachments' in post:
         attachment = post['attachments']
@@ -393,6 +465,9 @@ def send_attachments(message_chat_id, post):
 
 @bot.message_handler(commands=['vk_management'])
 def get_operation(message):
+    """
+    Prompts the user to subscribe/unsubscribe on vk group
+    """
     markup = telebot.types.ReplyKeyboardMarkup(True, True)
     button_add = telebot.types.KeyboardButton('add')
     button_delete = telebot.types.KeyboardButton('delete')
@@ -406,6 +481,9 @@ def get_operation(message):
 
 
 def vk_setting(message):
+    """
+    Prompts the user to enter ID of the group to add/delete
+    """
     vk_operation = message.text
     if vk_operation == 'exit':
         main_keyboard(message)
@@ -433,6 +511,9 @@ def vk_setting(message):
 
 
 def vk_add(message):
+    """
+    Directly adds group to subscription list
+    """
     vk_id = message.text
     vk = start_vk_session()
     name_of_group = ''
@@ -457,7 +538,7 @@ def vk_add(message):
         add_group(message.chat.id, id_of_group, name_of_group)
         is_already_existed = is_new_group(id_of_group)
         if is_already_existed:
-            last_post_id = get_data(COUNT_MAIN, id_of_group)
+            last_post_id = get_data(COUNT_OF_VIEWED_POSTS, id_of_group)
             if last_post_id:
                 last_post_id = last_post_id['items'][0]['id']
                 add_new_post(id_of_group, int(last_post_id))
@@ -470,6 +551,9 @@ def vk_add(message):
 
 
 def vk_delete(message):
+    """
+    Directly deletes group from subscription list
+    """
     vk_operation = message.text
     if vk_operation.isdigit():
         is_existed, group_name = is_persons_group(message.chat.id, group_id=int(vk_operation))
@@ -499,7 +583,9 @@ def vk_delete(message):
 
 @bot.message_handler(commands=['my_groups'])
 def persons_groups(message):
-    """Функция для вывода пользователю списка всех групп, на которые он подписан"""
+    """
+    Shows list of user's subscribed groups
+    """
     list_of_groups = get_persons_groups(message.chat.id)
     text_of_message = ''
     for name_of_group in list_of_groups:
@@ -512,6 +598,9 @@ def persons_groups(message):
 
 @bot.message_handler(commands=['info'])
 def get_info(message):
+    """
+    Prompts the user to press the button of subscribed group to get last post of this group
+    """
     markup = telebot.types.InlineKeyboardMarkup()
     list_of_groups = get_persons_groups(message.chat.id)
     print(list_of_groups)
@@ -523,6 +612,9 @@ def get_info(message):
 # Inline keyboard
 @bot.callback_query_handler(func=lambda call: True)
 def callback_inline(call):
+    """
+    Calls the send last post function of this group
+    """
     list_of_groups = get_persons_groups(call.message.chat.id)
     for group in list_of_groups:
         if call.data == str(group[0]):
@@ -530,6 +622,9 @@ def callback_inline(call):
 
 
 def bot_telegram_polling():
+    """
+    Starts operation of the telegram bot
+    """
     while True:
         try:
             global bot
@@ -539,6 +634,9 @@ def bot_telegram_polling():
 
 
 def vk_post():
+    """
+    Calls the send posts function every 10 seconds
+    """
     while True:
         send_posts_vk_continuously()
         sleep(10)
