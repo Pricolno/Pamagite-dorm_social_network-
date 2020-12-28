@@ -123,7 +123,7 @@ def get_surname(message):
     Prompts the user to enter a surname to find out where he/she lives
     """
     next_message = bot.send_message(message.chat.id, 'Чьё местопроживание вас интересует?\n Фамилия Имя\n'
-                                                     'Поиск по одной Фамилия/Имя:\nsurname=Фамилия/Имени')
+                                                     'Поиск по одной Фамилии\nПоиск по одному имени: name=Имя')
     bot.register_next_step_handler(next_message, give_room)
 
 
@@ -135,25 +135,26 @@ def give_room(message):
     owner_room = owner_room.split(' ')
     if len(owner_room) > 2:
         next_message = bot.send_message(message.chat.id,
-                                        'Пожалуйста введите корректно данные\nФамилия Имя\nПоиск по одной Фамилия'
-                                        '/Имя:\nsurname=Фамилия/Имени')
+                                        'Пожалуйста введите корректно данные\nФамилия Имя\nПоиск по одной Фамилии\n'
+                                        'Поиск по одному имени : name=Имя')
         bot.register_next_step_handler(next_message, give_room)
         return
     surname, name = None, None
 
     if len(owner_room) == 1:  # кучу косяков проверка на верный ввод
         text_of_command = owner_room[0]
-        if 'surname=' in text_of_command:
-            surname = text_of_command.replace('surname=', '').strip()
-        elif 'name=' in text_of_command:
+        if 'name' in text_of_command:
             name = text_of_command.replace('name=', '').strip()
         else:
-            next_message = bot.send_message(message.chat.id,
-                                            'Пожалуйста введите корректно данные\nФамилия Имя\nПоиск по одной '
-                                            'Фамилии/Имени:\n'
-                                            'surname=Фамилия/Имени')
-            bot.register_next_step_handler(next_message, give_room)
-            return
+            surname = text_of_command.replace('surname=', '').strip()
+
+        # else:
+        #     next_message = bot.send_message(message.chat.id,
+        #                                     'Пожалуйста введите корректно данные\nФамилия Имя\nПоиск по одной '
+        #                                     'Фамилии/Имени:\n'
+        #                                     'surname=Фамилия/Имени')
+        #     bot.register_next_step_handler(next_message, give_room)
+        #     return
     else:
         surname = owner_room[0]
         name = owner_room[1]
