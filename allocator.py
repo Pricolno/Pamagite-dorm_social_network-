@@ -388,7 +388,7 @@ def send_posts_vk_continuously():
     """
     Sends group posts to which the user subscribed as soon as they have been published
     """
-    message_chat_ids = [565387963, 387731337]
+    message_chat_ids = get_all_chat_ids()
     for chat_id in message_chat_ids:
         groups = get_persons_groups(chat_id)
         for group in groups:
