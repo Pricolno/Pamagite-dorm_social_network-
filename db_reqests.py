@@ -313,9 +313,6 @@ def update_last_post_id(group_id, post_id):
     cursor.close()
 
 
-
-
-
 if __name__ == '__main__':
     init_bd_hostel()
     init_bd_vk_groups()
