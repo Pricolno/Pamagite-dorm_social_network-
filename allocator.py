@@ -8,7 +8,6 @@ import vk_api
 import configparser
 from time import sleep
 
-
 config_path = os.path.join(sys.path[0], 'settings.ini')
 config = configparser.ConfigParser()
 config.read(config_path)
@@ -61,15 +60,28 @@ def create_main_markup():
     return markup
 
 
+def check_is_new_user(chat_id):
+    exist_note, profile = get_profile(chat_id)
+    return not exist_note
+
+
 # первое взаимодействие с ботом
 @bot.message_handler(commands=['start'])
 def start(message):
     markup = create_main_markup()
+
+    # if check_is_new_user(message.chat.id):
+    exist_in_db, profile = get_profile(message.chat.id)
+    print(exist_in_db)
+    print(profile)
     bot.send_message(message.chat.id, 'Привет, это бот для жителей Дома Студента!\n'
                                       'Здесь вы можете узнать много полезной информции и удобно общаться с соседями!\n'
                                       'Используйте /help чтобы узнать команды', reply_markup=markup)
 
     bot.send_sticker(message.chat.id, 'CAACAgIAAxkBAAJc8V-2w6lq33eMxp9tbsA2ZtBHpH8gAAJ0AAM7YCQUs8te1W3kR_QeBA')
+
+    if not exist_in_db:
+        bot.send_message(message.chat.id, 'Самое главное, не забудьте зарегистрироваться 😋 /registration ')
 
 
 def main_keyboard(message):
@@ -135,7 +147,7 @@ def give_room(message):
     owner_room = owner_room.split(' ')
     if len(owner_room) > 2:
         next_message = bot.send_message(message.chat.id,
-                                        'Пожалуйста введите корректно данные\nФамилия Имя\nПоиск по одной Фамилии\n'
+                                        'Пожалуйста введите корректно данные\nФамилия Имя\nПоиск по одной Фамилия\n'
                                         'Поиск по одному имени : name=Имя')
         bot.register_next_step_handler(next_message, give_room)
         return
@@ -345,6 +357,95 @@ def send_message_across_the_room_final(message):
         bot.send_message(message.chat.id, 'Мы не знаем кто там живёт :(')
 
 
+@bot.message_handler(commands=['send_message_to_student'])
+def send_message_to_student_request(message):
+    exception_handler_answer_send_message_to_student(message, first_request=True)
+
+
+def exception_handler_answer_send_message_to_student(message, exception: str = '', first_request: bool = False):
+    if not first_request:
+        bot.send_message(message.chat.id, exception + '😞')
+
+    markup = telebot.types.ReplyKeyboardMarkup(True, True)
+    button_exit = telebot.types.KeyboardButton('exit')
+    markup.row(button_exit)
+
+    next_message = bot.send_message(message.chat.id, 'Кому вы хотите отправить письмо?\n '
+                                                     'Фамилия\n'
+                                                     'Имя\n'
+                                                     'Или введите одну Фамилию', reply_markup=markup)
+    bot.register_next_step_handler(next_message, handler_answer_send_message_to_student)
+
+
+def handler_answer_send_message_to_student(message):
+    if 'exit' in message.text:
+        main_keyboard(message)
+        return
+
+    surname, name = None, None
+    find_person = [word.strip(' ') for word in message.text.split('\n')]
+    #print(find_person)
+    if len(find_person) == 1:
+        surname = find_person[0]
+    elif len(find_person) == 2:
+        surname = find_person[0]
+        name = find_person[1]
+    else:
+        exception_handler_answer_send_message_to_student(message, exception='Данные введены некорректно')
+        return
+    print(surname)
+    print(name)
+
+    exist_student, request_students = where_lives_person(surname, name)
+    print(request_students)
+    if not exist_student:
+        exception_handler_answer_send_message_to_student(message, exception='Этот студент не зарегистрирован')
+        return
+
+    markup = telebot.types.ReplyKeyboardMarkup(True, True)
+
+    button_back = telebot.types.KeyboardButton('back')
+    button_exit = telebot.types.KeyboardButton('exit')
+    markup.row(button_back)
+    markup.row(button_exit)
+
+    next_message = bot.send_message(message.chat.id, 'Напишите письмо этому человеку ✉', reply_markup=markup)
+
+    bot.register_next_step_handler(next_message, get_message_and_to_set_student, request_students)
+
+
+def get_message_and_to_set_student(message, request_students):
+    #print(request_students)
+    if 'exit' in message.text:
+        main_keyboard(message)
+        return
+    if 'back' in message.text:
+        exception_handler_answer_send_message_to_student(message, first_request=True)
+        return
+
+    exist, profile_sender = get_profile(message.chat.id)
+    if not exist:
+        print('wtf как нету???')
+        main_keyboard(message)
+        return
+    #print(type(profile_sender))
+    sender_room, sender_surname, sender_name, sender_chat_id = profile_sender[0]
+
+    for student in request_students:
+        room, surname, name, chat_id = student
+        print(request_students)
+        try:
+            bot.send_message(chat_id, "Вам пришло письмо от " + sender_surname + ' ' + str(sender_room) + '\n' + message.text)
+            bot.send_message(message.chat.id, 'Студент ' + surname + ' ' + str(room) + ' получил письмо')
+            print(sender_surname + ' -> ' + surname + ': ' + message.text)
+        except telebot.apihelper.ApiException as e:
+            bot.send_message(message.chat.id, surname + ' ' + name + ' заблокировал бота :(')
+            print(e)
+            print('Block: ' + surname)
+
+    send_message_to_student_request(message)
+
+
 def start_vk_session():
     """
     Connects with vk api
@@ -388,9 +489,13 @@ def send_posts_vk_continuously():
     """
     Sends group posts to which the user subscribed as soon as they have been published
     """
-    message_chat_ids = [565387963, 387731337]
+    # message_chat_ids = [565387963, 387731337]
+    message_chat_ids = get_all_chat_ids()
+    #print('DEB ' + str(message_chat_ids))
+    #print(type(message_chat_ids[0]))
+    #print('DEB_FINISH')
     for chat_id in message_chat_ids:
-        groups = get_persons_groups(chat_id)
+        groups = get_persons_groups(int(chat_id))
         for group in groups:
             group_id = group[0]
             group_name = group[1]
@@ -398,6 +503,8 @@ def send_posts_vk_continuously():
             if post:
                 post = post['items'][0]
                 last_post_id = get_last_post_id(group_id)
+                # print(post['id'])
+                # print(last_post_id)
                 if int(post['id']) > last_post_id:
                     text = post['text']
                     send_posts_text(text, chat_id, group_name)
@@ -631,7 +738,8 @@ def bot_telegram_polling():
             global bot
             bot.polling(none_stop=True)
         except Exception as exception:
-            print(exception)
+            # bot.send_message(387731337, exception)
+            print('mdaaa')
 
 
 def vk_post():
